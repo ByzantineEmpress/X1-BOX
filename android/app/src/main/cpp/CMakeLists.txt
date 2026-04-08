@@ -29,11 +29,6 @@ if(CARGO_EXECUTABLE MATCHES "-NOTFOUND$" OR NOT CARGO_EXECUTABLE)
     endif()
   endif()
 endif()
-set(XEMU_XISO_CONVERTER_BUILD_ENABLED ${XEMU_ENABLE_XISO_CONVERTER})
-if(XEMU_XISO_CONVERTER_BUILD_ENABLED AND NOT CARGO_EXECUTABLE)
-  message(WARNING "cargo not found in PATH; disabling XISO converter")
-  set(XEMU_XISO_CONVERTER_BUILD_ENABLED OFF)
-endif()
 
 # --- SDL2 ---
 option(XEMU_FETCH_SDL2 "Download and build SDL2 for Android" ON)
@@ -272,82 +267,6 @@ else()
   set(NDK_HOST_TAG "linux-x86_64")
 endif()
 set(NDK_TOOLCHAIN "${NDK_PATH}/toolchains/llvm/prebuilt/${NDK_HOST_TAG}/bin")
-
-if(XEMU_XISO_CONVERTER_BUILD_ENABLED)
-  if(CMAKE_HOST_WIN32)
-    if(NOT DEFINED XISO_CONVERTER_RUSTUP_TOOLCHAIN OR
-       XISO_CONVERTER_RUSTUP_TOOLCHAIN STREQUAL "")
-      set(XISO_CONVERTER_RUSTUP_TOOLCHAIN
-        "stable-x86_64-pc-windows-msvc"
-        CACHE STRING "Rustup host toolchain for ISO->XISO converter"
-        FORCE
-      )
-    else()
-      set(XISO_CONVERTER_RUSTUP_TOOLCHAIN
-        "${XISO_CONVERTER_RUSTUP_TOOLCHAIN}"
-        CACHE STRING "Rustup host toolchain for ISO->XISO converter"
-      )
-    endif()
-  else()
-    set(XISO_CONVERTER_RUSTUP_TOOLCHAIN
-      ""
-      CACHE STRING "Rustup host toolchain for ISO->XISO converter"
-    )
-  endif()
-
-  set(XISO_CONVERTER_CARGO_ENV_VARS "")
-  if(DEFINED XISO_CONVERTER_RUSTUP_TOOLCHAIN AND
-     NOT XISO_CONVERTER_RUSTUP_TOOLCHAIN STREQUAL "")
-    list(APPEND XISO_CONVERTER_CARGO_ENV_VARS
-      "RUSTUP_TOOLCHAIN=${XISO_CONVERTER_RUSTUP_TOOLCHAIN}"
-    )
-  endif()
-
-  set(XISO_CONVERTER_RS_DIR "${REPO_ROOT}/android/rust/xiso_converter")
-  set(XISO_CONVERTER_RS_TARGET "aarch64-linux-android")
-  set(XISO_CONVERTER_RS_TARGET_DIR "$ENV{USERPROFILE}/.cargo/xemu_target")
-  set(XISO_CONVERTER_RS_LIB
-    "${XISO_CONVERTER_RS_TARGET_DIR}/${XISO_CONVERTER_RS_TARGET}/release/libxiso_converter_rs.a"
-  )
-  set(XISO_CONVERTER_RS_LINKER
-    "${NDK_TOOLCHAIN}/aarch64-linux-android${ANDROID_API}-clang"
-  )
-  set(XISO_CONVERTER_RS_AR "${NDK_TOOLCHAIN}/llvm-ar")
-
-  file(GLOB_RECURSE XISO_CONVERTER_RS_SOURCES CONFIGURE_DEPENDS
-    "${XISO_CONVERTER_RS_DIR}/src/*.rs"
-    "${XISO_CONVERTER_RS_DIR}/Cargo.toml"
-    "${REPO_ROOT}/android/third_party/xdvdfs-core/src/*.rs"
-    "${REPO_ROOT}/android/third_party/xdvdfs-core/Cargo.toml"
-  )
-
-  add_custom_command(
-    OUTPUT "${XISO_CONVERTER_RS_LIB}"
-    COMMAND "${CMAKE_COMMAND}" -E env
-      "CARGO_TARGET_DIR=${XISO_CONVERTER_RS_TARGET_DIR}"
-      "CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER=${XISO_CONVERTER_RS_LINKER}"
-      "CARGO_TARGET_AARCH64_LINUX_ANDROID_AR=${XISO_CONVERTER_RS_AR}"
-      ${XISO_CONVERTER_CARGO_ENV_VARS}
-      "${CARGO_EXECUTABLE}" build
-      --manifest-path "${XISO_CONVERTER_RS_DIR}/Cargo.toml"
-      --release
-      --target "${XISO_CONVERTER_RS_TARGET}"
-    DEPENDS ${XISO_CONVERTER_RS_SOURCES}
-    WORKING_DIRECTORY "${XISO_CONVERTER_RS_DIR}"
-    COMMENT "Building Rust ISO->XISO converter"
-    VERBATIM
-  )
-
-  add_custom_target(xiso_converter_rs_build ALL
-    DEPENDS "${XISO_CONVERTER_RS_LIB}"
-  )
-
-  add_library(xiso_converter_rs STATIC IMPORTED GLOBAL)
-  set_target_properties(xiso_converter_rs PROPERTIES
-    IMPORTED_LOCATION "${XISO_CONVERTER_RS_LIB}"
-  )
-  add_dependencies(xiso_converter_rs xiso_converter_rs_build)
-endif()
 
 if(NOT CARGO_EXECUTABLE)
   message(FATAL_ERROR "cargo not found in PATH; required to build DSP56300 JIT backend for Android")
