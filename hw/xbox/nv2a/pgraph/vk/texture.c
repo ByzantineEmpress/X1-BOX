@@ -35,6 +35,7 @@ static bool image_pool_acquire(PGRAPHVkState *r, const TextureImageConfig *confi
                                VkImage *out_image, VmaAllocation *out_allocation);
 static void image_pool_drain(PGRAPHVkState *r);
 
+
 static const VkImageType dimensionality_to_vk_image_type[] = {
     0,
     VK_IMAGE_TYPE_1D,
@@ -138,6 +139,25 @@ static enum S3TC_DECOMPRESS_FORMAT kelvin_format_to_s3tc_format(int color_format
     }
 }
 
+<<<<<<< HEAD
+=======
+/* Returns the native Vulkan BC format for a DXT texture, or 0 if the format
+ * is not a compressed DXT texture. Only call when BC support is available. */
+static VkFormat kelvin_format_to_native_bc(int color_format)
+{
+    switch (color_format) {
+    case NV097_SET_TEXTURE_FORMAT_COLOR_L_DXT1_A1R5G5B5:
+        return VK_FORMAT_BC1_RGBA_UNORM_BLOCK;
+    case NV097_SET_TEXTURE_FORMAT_COLOR_L_DXT23_A8R8G8B8:
+        return VK_FORMAT_BC2_UNORM_BLOCK;
+    case NV097_SET_TEXTURE_FORMAT_COLOR_L_DXT45_A8R8G8B8:
+        return VK_FORMAT_BC3_UNORM_BLOCK;
+    default:
+        return (VkFormat)0;
+    }
+}
+
+>>>>>>> 21e61a4e01 (nv2a: fix BC3 corruption by disabling native BC for 3D textures)
 // FIXME: Move to common
 static void memcpy_image(void *dst, void *src, int min_stride, int dst_stride, int src_stride, int height)
 {
@@ -301,11 +321,22 @@ static TextureLayout *get_texture_layout(PGRAPHState *pg, int texture_idx)
                     unsigned int physical_width = (width + 3) & ~3,
                                  physical_height = (height + 3) & ~3;
 
+<<<<<<< HEAD
                     size_t converted_size = width * height * 4;
                     uint8_t *converted = s3tc_decompress_2d(
                         kelvin_format_to_s3tc_format(s.color_format),
                         texture_data_ptr, width, height);
                     assert(converted);
+=======
+                    VkFormat _bc_fmt = r->texture_compression_bc_supported
+                        ? kelvin_format_to_native_bc(s.color_format) : (VkFormat)0;
+                    if (_bc_fmt) {
+                        /* Native BC path: upload compressed blocks directly.
+                         * DXT blocks are already in linear order (L_ prefix).
+                         * No decompression needed. */
+                        uint8_t *raw_copy = g_malloc(compressed_size);
+                        memcpy(raw_copy, texture_data_ptr, compressed_size);
+>>>>>>> 21e61a4e01 (nv2a: fix BC3 corruption by disabling native BC for 3D textures)
 
                     if (s.cubemap && adjusted_width != s.width) {
                         // FIXME: Consider preserving the border.
@@ -546,6 +577,15 @@ static void upload_texture_image(PGRAPHState *pg, int texture_idx,
     TextureShape *state = &binding->key.state;
     VkColorFormatInfo vkf = kelvin_color_format_vk_map[state->color_format];
 
+    /* Override format for native BC upload.
+     * Skip for 3D textures — Vulkan doesn't guarantee BC for VK_IMAGE_TYPE_3D. */
+    VkFormat native_bc = (r->texture_compression_bc_supported &&
+                          state->dimensionality != 3)
+                         ? kelvin_format_to_native_bc(state->color_format)
+                         : (VkFormat)0;
+    if (native_bc) {
+        vkf.vk_format = native_bc;
+    }
     VK_LOG("upload_texture: idx=%d fmt=%d %ux%u cubemap=%d levels=%d",
            texture_idx, state->color_format, state->width, state->height,
            state->cubemap, state->levels);
@@ -1441,6 +1481,23 @@ static void create_texture(PGRAPHState *pg, int texture_idx)
         r->tex_binding_cache[texture_idx].binding = binding_found ? snode : NULL;
     }
 
+    /* Determine the expected VkFormat for this texture now.  If a cached
+     * entry exists but was created with a different format (e.g. RGBA8 from
+     * a surface_to_texture frame vs BC3 when no surface overlaps), the
+     * cached image cannot be reused — treat it as a miss. */
+    VkFormat expected_fmt = kelvin_color_format_vk_map[state.color_format].vk_format;
+    if (!surface_to_texture && r->texture_compression_bc_supported &&
+        state.dimensionality != 3) {
+        VkFormat bc = kelvin_format_to_native_bc(state.color_format);
+        if (bc) expected_fmt = bc;
+    }
+    if (binding_found && snode->image_config.format != expected_fmt) {
+        texture_cache_release_node_resources(r, snode);
+        snode->image = VK_NULL_HANDLE;
+        snode->image_view = VK_NULL_HANDLE;
+        binding_found = false;
+        possibly_dirty = true;
+    }
     if (binding_found) {
         NV2A_VK_DPRINTF("Cache hit");
         r->texture_bindings[texture_idx] = snode;
@@ -1575,6 +1632,22 @@ static void create_texture(PGRAPHState *pg, int texture_idx)
     snode->hash = content_hash;
 
     VkColorFormatInfo vkf = kelvin_color_format_vk_map[state.color_format];
+    /* Use native BC format when hardware supports it, but NOT when the
+     * texture will be filled from an uncompressed render surface, and
+     * NOT when a texture replacement exists (replacements are uncompressed). */
+    bool has_replacement = false;
+    VkFormat native_bc = (!surface_to_texture && !has_replacement &&
+                          r->texture_compression_bc_supported &&
+                          state.dimensionality != 3)
+                         ? kelvin_format_to_native_bc(state.color_format)
+                         : (VkFormat)0;
+    if (native_bc) {
+        vkf.vk_format = native_bc;
+        vkf.component_map = (VkComponentMapping){
+            VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY,
+            VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY,
+        };
+    }
     assert(vkf.vk_format != 0);
     assert(0 < state.dimensionality);
     assert(state.dimensionality < ARRAY_SIZE(dimensionality_to_vk_image_type));
