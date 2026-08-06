@@ -20,16 +20,27 @@ void xemu_aot_scan_xbe(const char* xbe_path) {
     BlockBackend *blk = NULL;
     BlockBackend *dvd_blk = NULL;
     uint8_t sector[2048] = {0};
+    uint64_t partition_offset = 0;
+    uint32_t root_sector = 0;
+    uint32_t root_size = 0;
     
     while ((blk = blk_next(blk)) != NULL) {
         if (blk_is_inserted(blk)) {
-            // Read Volume Descriptor at sector 32 (offset 65536)
-            if (blk_pread(blk, 32 * 2048, 2048, sector, 0) == 2048) {
+            // Check XISO (0), XGD1 (405798912), XGD2 (265879552), XGD3 (34078720) offsets
+            uint64_t offsets[] = { 0, 405798912, 265879552, 34078720 };
+            for (int i = 0; i < 4; i++) {
+                if (blk_pread(blk, offsets[i] + 32 * 2048, 2048, sector, 0) < 0) {
+                    continue;
+                }
                 if (memcmp(sector, "MICROSOFT*XBOX*MEDIA", 20) == 0) {
                     dvd_blk = blk;
+                    partition_offset = offsets[i];
+                    root_sector = *(uint32_t*)(sector + 0x14);
+                    root_size = *(uint32_t*)(sector + 0x18);
                     break;
                 }
             }
+            if (dvd_blk) break;
         }
     }
     
@@ -39,15 +50,12 @@ void xemu_aot_scan_xbe(const char* xbe_path) {
     }
     
     blk = dvd_blk;
-    LOGI("ISO Media detected. Mounting Xbox DVD filesystem (GDFX)...\n");
-    
-    uint32_t root_sector = *(uint32_t*)(sector + 0x14);
-    uint32_t root_size = *(uint32_t*)(sector + 0x18);
+    LOGI("ISO Media detected at offset %llu. Mounting Xbox DVD filesystem (GDFX)...\n", partition_offset);
     
     LOGI("Locating default.xbe on ISO filesystem... (Root sector: %u, Size: %u)\n", root_sector, root_size);
     
     uint8_t* root_dir = (uint8_t*)malloc(root_size);
-    if (blk_pread(blk, root_sector * 2048, root_size, root_dir, 0) < 0) {
+    if (blk_pread(blk, partition_offset + (root_sector * 2048), root_size, root_dir, 0) < 0) {
         LOGI("Failed to read root directory.\n");
         free(root_dir);
         return;
@@ -92,7 +100,7 @@ void xemu_aot_scan_xbe(const char* xbe_path) {
     LOGI("Extracting default.xbe (Size: %u bytes, Sector: %u) directly from ISO into memory for AOT analysis...\n", xbe_size, xbe_sector);
     
     uint8_t* xbe_buffer = (uint8_t*)malloc(xbe_size);
-    if (blk_pread(blk, xbe_sector * 2048, xbe_size, xbe_buffer, 0) < 0) {
+    if (blk_pread(blk, partition_offset + (xbe_sector * 2048), xbe_size, xbe_buffer, 0) < 0) {
         LOGI("Failed to extract default.xbe from ISO.\n");
         free(xbe_buffer);
         return;
