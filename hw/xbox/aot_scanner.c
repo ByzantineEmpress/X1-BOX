@@ -16,26 +16,30 @@ extern void aot_build_cfg(uint32_t entry_point, const uint8_t* text_section_buff
 void xemu_aot_scan_xbe(const char* xbe_path) {
     LOGI("Initiating Ahead-of-Time (AOT) static recompilation pass...\n");
     
-    LOGI("Probing virtual DVD drive for inserted ISO media...\n");
-    BlockBackend *blk = blk_by_name("ide0-cd1");
-    if (!blk || !blk_is_inserted(blk)) {
-        LOGI("No DVD media found in ide0-cd1! Aborting AOT.\n");
+    LOGI("Probing block devices for inserted Xbox DVD media...\n");
+    BlockBackend *blk = NULL;
+    BlockBackend *dvd_blk = NULL;
+    uint8_t sector[2048] = {0};
+    
+    while ((blk = blk_next(blk)) != NULL) {
+        if (blk_is_inserted(blk)) {
+            // Read Volume Descriptor at sector 32 (offset 65536)
+            if (blk_pread(blk, 32 * 2048, 2048, sector, 0) == 2048) {
+                if (memcmp(sector, "MICROSOFT*XBOX*MEDIA", 20) == 0) {
+                    dvd_blk = blk;
+                    break;
+                }
+            }
+        }
+    }
+    
+    if (!dvd_blk) {
+        LOGI("No Xbox DVD media found in any block device! Aborting AOT.\n");
         return;
     }
     
+    blk = dvd_blk;
     LOGI("ISO Media detected. Mounting Xbox DVD filesystem (GDFX)...\n");
-    
-    // Read Volume Descriptor at sector 32 (offset 65536)
-    uint8_t sector[2048];
-    if (blk_pread(blk, 32 * 2048, 2048, sector, 0) < 0) {
-        LOGI("Failed to read GDFX volume descriptor.\n");
-        return;
-    }
-    
-    if (memcmp(sector, "MICROSOFT*XBOX*MEDIA", 20) != 0) {
-        LOGI("Invalid GDFX Volume Descriptor! Not a valid Xbox ISO.\n");
-        return;
-    }
     
     uint32_t root_sector = *(uint32_t*)(sector + 0x14);
     uint32_t root_size = *(uint32_t*)(sector + 0x18);

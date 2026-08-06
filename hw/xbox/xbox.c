@@ -207,7 +207,6 @@ void xemu_aot_scan_xbe(const char* xbe_path);
 static void xbox_init(MachineState *machine)
 {
     xbox_init_common(machine, NULL, NULL);
-    xemu_aot_scan_xbe("game.xbe"); // IDE drive is now initialized
 }
 
 void xbox_init_common(MachineState *machine,
