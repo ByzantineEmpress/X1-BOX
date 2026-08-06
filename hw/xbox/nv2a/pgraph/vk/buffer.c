@@ -243,7 +243,8 @@ bool pgraph_vk_init_buffers(NV2AState *d, Error **errp)
     };
     VmaAllocationCreateInfo device_alloc_create_info = {
         .usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
-        .flags = 0,
+        .preferredFlags = XEMU_VMA_PREF_FLAGS,
+        .flags = XEMU_VMA_FLAGS,
     };
 
     r->storage_buffers[BUFFER_STAGING_DST] = (StorageBuffer){

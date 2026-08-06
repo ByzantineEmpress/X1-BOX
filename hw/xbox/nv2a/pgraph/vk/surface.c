@@ -1858,6 +1858,8 @@ static void create_surface_image(PGRAPHState *pg, SurfaceBinding *surface)
 
         VmaAllocationCreateInfo alloc_create_info = {
             .usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
+            .preferredFlags = XEMU_VMA_PREF_FLAGS,
+            .flags = XEMU_VMA_FLAGS,
         };
 
         VkResult res = vmaCreateImage(r->allocator, &image_create_info,

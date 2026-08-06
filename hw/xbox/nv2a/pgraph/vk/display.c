@@ -209,6 +209,8 @@ static void create_pvideo_image(PGRAPHState *pg, int width, int height)
     };
     VmaAllocationCreateInfo alloc_create_info = {
         .usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
+        .preferredFlags = XEMU_VMA_PREF_FLAGS,
+        .flags = XEMU_VMA_FLAGS,
     };
     VK_CHECK(vmaCreateImage(r->allocator, &image_create_info,
                             &alloc_create_info, &d->pvideo.image,
@@ -1235,6 +1237,8 @@ static bool create_display_image(PGRAPHState *pg, int width, int height)
         };
         VmaAllocationCreateInfo ai = {
             .usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
+            .preferredFlags = XEMU_VMA_PREF_FLAGS,
+            .flags = XEMU_VMA_FLAGS,
         };
         VK_CHECK(vmaCreateImage(r->allocator, &ci, &ai,
                                 &d->blend_prev_image,

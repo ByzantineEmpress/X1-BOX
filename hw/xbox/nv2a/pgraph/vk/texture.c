@@ -1110,6 +1110,8 @@ static void create_dummy_texture(PGRAPHState *pg)
 
     VmaAllocationCreateInfo alloc_create_info = {
         .usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
+        .preferredFlags = XEMU_VMA_PREF_FLAGS,
+        .flags = XEMU_VMA_FLAGS,
     };
 
     VkImage texture_image;
@@ -1615,6 +1617,8 @@ static void create_texture(PGRAPHState *pg, int texture_idx)
 
     VmaAllocationCreateInfo alloc_create_info = {
         .usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE,
+        .preferredFlags = XEMU_VMA_PREF_FLAGS,
+        .flags = XEMU_VMA_FLAGS,
     };
 
     VkResult create_result = VK_SUCCESS;

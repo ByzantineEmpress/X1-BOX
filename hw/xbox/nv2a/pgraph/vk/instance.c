@@ -484,6 +484,13 @@ static void add_optional_device_extension_names(
         available_extensions, enabled_extension_names,
         VK_EXT_MEMORY_BUDGET_EXTENSION_NAME);
 
+#ifdef __ANDROID__
+    /* Check for load_store_op_none which is heavily beneficial for TBDR Adreno/Turnip */
+    add_extension_if_available(
+        available_extensions, enabled_extension_names,
+        VK_EXT_LOAD_STORE_OP_NONE_EXTENSION_NAME);
+#endif
+
     if (r->device_props.apiVersion < VK_API_VERSION_1_3) {
         r->extended_dynamic_state_supported = add_extension_if_available(
             available_extensions, enabled_extension_names,
