@@ -205,7 +205,7 @@ class GameLibraryActivity : AppCompatActivity() {
               Toast.makeText(this, "AOT compilation finished!", Toast.LENGTH_LONG).show()
             }
           }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
           e.printStackTrace()
           runOnUiThread {
             aotDialog?.dismiss()

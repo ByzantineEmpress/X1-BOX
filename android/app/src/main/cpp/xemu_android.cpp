@@ -1617,9 +1617,11 @@ extern "C" void xemu_aot_scan_xbe_fd(int fd, void (*progress_cb)(int, const char
 
 static JavaVM* g_jvm = nullptr;
 static jobject g_aot_callback_obj = nullptr;
+static jmethodID g_aot_method = nullptr;
 
 static void aot_progress_wrapper(int percent, const char* message) {
     if (!g_jvm || !g_aot_callback_obj) return;
+    if (!message) message = "";
     JNIEnv* env = nullptr;
     bool did_attach = false;
     if (g_jvm->GetEnv((void**)&env, JNI_VERSION_1_6) == JNI_EDETACHED) {
@@ -1627,11 +1629,21 @@ static void aot_progress_wrapper(int percent, const char* message) {
         did_attach = true;
     }
     jclass cls = env->GetObjectClass(g_aot_callback_obj);
-    jmethodID method = env->GetMethodID(cls, "onAotProgress", "(ILjava/lang/String;)V");
-    if (method) {
+    if (!g_aot_method) {
+        g_aot_method = env->GetMethodID(cls, "onAotProgress", "(ILjava/lang/String;)V");
+        if (env->ExceptionCheck()) {
+            env->ExceptionClear();
+        }
+    }
+    if (g_aot_method) {
         jstring jmessage = env->NewStringUTF(message);
-        env->CallVoidMethod(g_aot_callback_obj, method, percent, jmessage);
-        env->DeleteLocalRef(jmessage);
+        if (jmessage) {
+            env->CallVoidMethod(g_aot_callback_obj, g_aot_method, percent, jmessage);
+            if (env->ExceptionCheck()) {
+                env->ExceptionClear();
+            }
+            env->DeleteLocalRef(jmessage);
+        }
     }
     env->DeleteLocalRef(cls);
     if (did_attach) {
@@ -1644,6 +1656,7 @@ Java_com_izzy2lost_x1box_GameLibraryActivity_triggerAotCompileFd(JNIEnv* env, jo
   if (fd >= 0) {
     env->GetJavaVM(&g_jvm);
     g_aot_callback_obj = env->NewGlobalRef(obj);
+    g_aot_method = nullptr;
     xemu_aot_scan_xbe_fd(fd, aot_progress_wrapper);
     env->DeleteGlobalRef(g_aot_callback_obj);
     g_aot_callback_obj = nullptr;

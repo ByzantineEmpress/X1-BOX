@@ -115,6 +115,13 @@ void xemu_aot_scan_xbe_fd(int fd, aot_progress_cb progress_cb) {
     if (progress_cb) progress_cb(20, "Extracting default.xbe from ISO...");
     
     uint8_t* xbe_buffer = (uint8_t*)malloc(xbe_size);
+    if (!xbe_buffer) {
+        LOGI("Failed to allocate memory for xbe_buffer.\n");
+        if (progress_cb) progress_cb(0, "Error: Out of memory (XBE)");
+        fclose(file);
+        return;
+    }
+    
     fseek(file, partition_offset + (xbe_sector * 2048), SEEK_SET);
     if (fread(xbe_buffer, 1, xbe_size, file) != xbe_size) {
         LOGI("Failed to extract default.xbe from ISO.\n");
@@ -141,6 +148,14 @@ void xemu_aot_scan_xbe_fd(int fd, aot_progress_cb progress_cb) {
     // Seek to the section headers to find the .text segment
     xbe_section text_section = {0};
     uint32_t section_offset = header.section_headers_address - header.base_address;
+    
+    if (section_offset + (header.number_of_sections * sizeof(xbe_section)) > xbe_size) {
+        LOGI("Malformed XBE: Section headers out of bounds.\n");
+        if (progress_cb) progress_cb(0, "Error: Malformed XBE headers");
+        free(xbe_buffer);
+        return;
+    }
+    
     for (uint32_t i = 0; i < header.number_of_sections; i++) {
         xbe_section sec;
         memcpy(&sec, xbe_buffer + section_offset + (i * sizeof(xbe_section)), sizeof(xbe_section));
@@ -157,8 +172,22 @@ void xemu_aot_scan_xbe_fd(int fd, aot_progress_cb progress_cb) {
         return;
     }
     
+    if (text_section.raw_address + text_section.raw_size > xbe_size) {
+        LOGI("Malformed XBE: .text section out of bounds.\n");
+        if (progress_cb) progress_cb(0, "Error: .text section out of bounds");
+        free(xbe_buffer);
+        return;
+    }
+    
     uint32_t text_size = text_section.raw_size;
     uint8_t* text_buffer = (uint8_t*)malloc(text_size);
+    if (!text_buffer) {
+        LOGI("Failed to allocate memory for text_buffer.\n");
+        if (progress_cb) progress_cb(0, "Error: Out of memory (text section)");
+        free(xbe_buffer);
+        return;
+    }
+    
     memcpy(text_buffer, xbe_buffer + text_section.raw_address, text_size);
     free(xbe_buffer);
     
