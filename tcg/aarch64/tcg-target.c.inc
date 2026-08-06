@@ -4304,8 +4304,8 @@ static void tcg_target_qemu_prologue(TCGContext *s)
 
     if (cpuinfo & CPUINFO_SVE2) {
         /* Initialize Predicate Register P0 to ALL TRUE for SVE2 operations */
-        /* PTRUE P0.B, ALL -> 0x2518e3e0 */
-        tcg_out32(s, 0x2518e3e0);
+        /* PTRUE P0.B, ALL -> 0x25180000 */
+        tcg_out32(s, 0x25180000);
     }
 
     /* Push (FP, LR) and allocate space for all saved registers.  */
