@@ -4367,19 +4367,19 @@ static void tcg_out_tb_start(TCGContext *s)
          * so goto_tb chaining works.  X26 = host_base when the fast
          * path is usable, 0 otherwise.
          */
-        tcg_insn_unit *label_no_fp, *label_no_fp2, *label_end;
+        tcg_insn_unit *label_no_fp, *label_end;
 
-        tcg_out_ld(s, TCG_TYPE_I32, TCG_REG_TMP0,
+        /* FUSED LOAD: Load both 32-bit 'active' (offset 8) and 'cb_count' (offset 12) 
+           simultaneously as a single 64-bit integer. */
+        tcg_out_ld(s, TCG_TYPE_I64, TCG_REG_TMP0,
                    TCG_REG_XBOX_RAM_BASE,
                    offsetof(XboxRamFPState, active));
+                   
+        /* If active == 1 and cb_count == 0, the 64-bit value will be exactly 1. */
+        tcg_out_cmp(s, TCG_TYPE_I64, TCG_COND_EQ, TCG_REG_TMP0, 1, 1);
+        
         label_no_fp = s->code_ptr;
-        tcg_out_insn(s, 3201, CBZ, 0, TCG_REG_TMP0, 0);
-
-        tcg_out_ld(s, TCG_TYPE_I32, TCG_REG_TMP0,
-                   TCG_REG_XBOX_RAM_BASE,
-                   offsetof(XboxRamFPState, cb_count));
-        label_no_fp2 = s->code_ptr;
-        tcg_out_insn(s, 3201, CBNZ, 0, TCG_REG_TMP0, 0);
+        tcg_out_insn(s, 3202, B_C, TCG_COND_NE, 0);
 
         tcg_out_ld(s, TCG_TYPE_PTR, TCG_REG_XBOX_HOST_BASE,
                    TCG_REG_XBOX_RAM_BASE,
@@ -4390,7 +4390,6 @@ static void tcg_out_tb_start(TCGContext *s)
 
         /* .no_fp: X26 = 0 signals per-load fast path is disabled */
         reloc_pc19(label_no_fp, tcg_splitwx_to_rx(s->code_ptr));
-        reloc_pc19(label_no_fp2, tcg_splitwx_to_rx(s->code_ptr));
         tcg_out_movi(s, TCG_TYPE_PTR, TCG_REG_XBOX_HOST_BASE, 0);
 
         /* .end_preamble: */
