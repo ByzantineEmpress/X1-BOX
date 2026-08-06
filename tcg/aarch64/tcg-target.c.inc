@@ -742,8 +742,8 @@ static void tcg_out_insn_3201(TCGContext *s, AArch64Insn insn, TCGType ext,
 
 static inline void tcg_out_isb(TCGContext *s)
 {
-    /* Replace generic yield with ISB SY for thread synchronization */
-    tcg_out32(s, 0xd5033fdf); /* ISB */
+    /* Replace generic yield with WFE (Wait For Event) for optimal thread synchronization on ARM */
+    tcg_out32(s, 0xd503205f); /* WFE */
 }
 
 static inline void tcg_out_tbl(TCGContext *s, TCGType ext, TCGReg rd, TCGReg rn, TCGReg rm)
