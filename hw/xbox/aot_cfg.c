@@ -12,6 +12,8 @@ uint32_t xbe_get_oep(const xbe_header* header) {
     return header->entry_point ^ 0xA8FC57AB; // Retail Key
 }
 
+extern void xemu_aot_translate_block(uint32_t start_pc, uint32_t end_pc, const uint8_t* block_buffer);
+
 /* 
  * A minimalistic custom x86 basic block scanner.
  * In a production build, this would be replaced with Capstone.
@@ -60,9 +62,12 @@ void aot_build_cfg(uint32_t entry_point, const uint8_t* text_section_buffer, uin
         if (is_terminator) {
             uint32_t block_end = entry_point + i;
             
-            // Log the first few blocks to avoid spamming logcat
+            // Log and Translate the first few blocks
             if (block_count < 10) {
                 LOGI("Discovered Basic Block %u: [0x%08X - 0x%08X] Terminator: %s\n", block_count, current_block_start, block_end, term_type);
+                
+                uint32_t buffer_offset = current_block_start - entry_point;
+                xemu_aot_translate_block(current_block_start, block_end, text_section_buffer + buffer_offset);
             }
             
             current_block_start = block_end + 1;
