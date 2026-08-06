@@ -1395,7 +1395,11 @@ extern "C" int SDL_main(int argc, char* argv[]) {
   }
 
   SDL_GL_MakeCurrent(window, gl);
-  SDL_GL_SetSwapInterval(1);
+  
+  // Disable VSync (Swap Interval 0) to prevent SurfaceFlinger from buffering 3 frames, massively reducing input latency
+  SDL_GL_SetSwapInterval(0);
+  // Disable touch-to-mouse emulation overhead for faster direct touch event polling
+  SDL_SetHint(SDL_HINT_TOUCH_MOUSE_EVENTS, "0");
 
   LogInfo("xemu Android bootstrap running (core not wired yet)");
 
