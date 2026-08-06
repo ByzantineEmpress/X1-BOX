@@ -265,14 +265,19 @@ if(NOT ANDROID_API)
 endif()
 
 set(ANDROID_TRIPLE "aarch64-none-linux-android${ANDROID_API}")
-set(NDK_TOOLCHAIN "${NDK_PATH}/toolchains/llvm/prebuilt/linux-x86_64/bin")
+if(CMAKE_HOST_WIN32)
+  set(NDK_HOST_TAG "windows-x86_64")
+else()
+  set(NDK_HOST_TAG "linux-x86_64")
+endif()
+set(NDK_TOOLCHAIN "${NDK_PATH}/toolchains/llvm/prebuilt/${NDK_HOST_TAG}/bin")
 
 if(XEMU_XISO_CONVERTER_BUILD_ENABLED)
   if(CMAKE_HOST_WIN32)
     if(NOT DEFINED XISO_CONVERTER_RUSTUP_TOOLCHAIN OR
        XISO_CONVERTER_RUSTUP_TOOLCHAIN STREQUAL "")
       set(XISO_CONVERTER_RUSTUP_TOOLCHAIN
-        "stable-x86_64-unknown-linux-gnu"
+        "stable-x86_64-pc-windows-msvc"
         CACHE STRING "Rustup host toolchain for ISO->XISO converter"
         FORCE
       )
@@ -299,7 +304,7 @@ if(XEMU_XISO_CONVERTER_BUILD_ENABLED)
 
   set(XISO_CONVERTER_RS_DIR "${REPO_ROOT}/android/rust/xiso_converter")
   set(XISO_CONVERTER_RS_TARGET "aarch64-linux-android")
-  set(XISO_CONVERTER_RS_TARGET_DIR "${CMAKE_BINARY_DIR}/rust-target")
+  set(XISO_CONVERTER_RS_TARGET_DIR "$ENV{USERPROFILE}/.cargo/xemu_target")
   set(XISO_CONVERTER_RS_LIB
     "${XISO_CONVERTER_RS_TARGET_DIR}/${XISO_CONVERTER_RS_TARGET}/release/libxiso_converter_rs.a"
   )
@@ -370,7 +375,7 @@ if(CMAKE_HOST_WIN32)
   if(NOT DEFINED DSP56300_RUSTUP_TOOLCHAIN OR
      DSP56300_RUSTUP_TOOLCHAIN STREQUAL "")
     set(DSP56300_RUSTUP_TOOLCHAIN
-      "stable-x86_64-unknown-linux-gnu"
+      "stable-x86_64-pc-windows-msvc"
       CACHE STRING "Rustup host toolchain for DSP56300 Android build"
       FORCE
     )
@@ -397,7 +402,7 @@ endif()
 
 set(DSP56300_RS_DIR "${dsp56300_src_SOURCE_DIR}/crates/emu-ffi")
 set(DSP56300_RS_TARGET "aarch64-linux-android")
-set(DSP56300_RS_TARGET_DIR "${CMAKE_BINARY_DIR}/rust-target-dsp56300")
+set(DSP56300_RS_TARGET_DIR "$ENV{USERPROFILE}/.cargo/xemu_target_dsp56300")
 set(DSP56300_RS_LIB
   "${DSP56300_RS_TARGET_DIR}/${DSP56300_RS_TARGET}/release/libdsp56300_emu_ffi.a"
 )
@@ -479,12 +484,14 @@ file(WRITE "${GLIB_CROSS_FILE}"
 "\n"
 "[properties]\n"
 "needs_exe_wrapper = true\n"
-"sys_root = '${NDK_PATH}/toolchains/llvm/prebuilt/linux-x86_64/sysroot'\n"
+"sys_root = '${NDK_PATH}/toolchains/llvm/prebuilt/${NDK_HOST_TAG}/sysroot'\n"
 "c_args = ['--target=${ANDROID_TRIPLE}', '-I${CMAKE_CURRENT_LIST_DIR}/iconv_stub']\n"
 "cpp_args = ['--target=${ANDROID_TRIPLE}', '-I${CMAKE_CURRENT_LIST_DIR}/iconv_stub']\n"
 "c_link_args = ['--target=${ANDROID_TRIPLE}', '-L${ICONV_STUB_DIR}', '-liconv']\n"
 "cpp_link_args = ['--target=${ANDROID_TRIPLE}', '-L${ICONV_STUB_DIR}', '-liconv']\n"
 )
+
+file(TO_NATIVE_PATH "${GLIB_INSTALL_DIR}" GLIB_INSTALL_DIR_NATIVE)
 
 ExternalProject_Add(glib_ep
   URL "https://download.gnome.org/sources/glib/2.66/glib-${GLIB_VERSION}.tar.xz"
@@ -497,7 +504,7 @@ ExternalProject_Add(glib_ep
   CONFIGURE_COMMAND
     "${MESON_EXECUTABLE}" setup "${GLIB_BUILD_DIR}" "${GLIB_SOURCE_DIR}"
     --cross-file "${GLIB_CROSS_FILE}"
-    --prefix "${GLIB_INSTALL_DIR}"
+    --prefix "/"
     --buildtype "release"
     --default-library "static"
     -Dgtk_doc=false
@@ -510,7 +517,7 @@ ExternalProject_Add(glib_ep
     -Dinternal_pcre=true
     -Dinstalled_tests=false
   BUILD_COMMAND "${NINJA_EXECUTABLE}" -C "${GLIB_BUILD_DIR}" -j 1
-  INSTALL_COMMAND "${MESON_EXECUTABLE}" install -C "${GLIB_BUILD_DIR}"
+  INSTALL_COMMAND "${CMAKE_COMMAND}" -E env "DESTDIR=${GLIB_INSTALL_DIR}" "${MESON_EXECUTABLE}" install -C "${GLIB_BUILD_DIR}"
   BUILD_BYPRODUCTS
     "${GLIB_INSTALL_DIR}/lib/libglib-2.0.a"
     "${GLIB_INSTALL_DIR}/lib/libgobject-2.0.a"

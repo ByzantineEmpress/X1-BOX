@@ -740,6 +740,24 @@ static void tcg_out_insn_3201(TCGContext *s, AArch64Insn insn, TCGType ext,
     tcg_out32(s, insn | ext << 31 | (imm19 & 0x7ffff) << 5 | rt);
 }
 
+static inline void tcg_out_isb(TCGContext *s)
+{
+    /* Replace generic yield with ISB SY for thread synchronization */
+    tcg_out32(s, 0xd5033fdf); /* ISB */
+}
+
+static inline void tcg_out_tbl(TCGContext *s, TCGType ext, TCGReg rd, TCGReg rn, TCGReg rm)
+{
+    /* Map x86 PSHUFB to ARM TBL (Table Lookup) */
+    tcg_out32(s, 0x4e000000 | ext << 30 | rm << 16 | rn << 5 | rd);
+}
+
+static inline void tcg_out_madd(TCGContext *s, TCGType ext, TCGReg rd, TCGReg rn, TCGReg rm, TCGReg ra)
+{
+    /* Optimize JIT cache validation with MADD */
+    tcg_out32(s, 0x1b000000 | ext << 31 | rm << 16 | ra << 10 | rn << 5 | rd);
+}
+
 static void tcg_out_insn_3202(TCGContext *s, AArch64Insn insn,
                               TCGCond c, int imm19)
 {
