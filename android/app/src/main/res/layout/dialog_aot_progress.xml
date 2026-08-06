@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:id="@+id/aot_progress_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Compiling AOT Cache..."
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp"/>
+
+    <ProgressBar
+        android:id="@+id/aot_progress_bar"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:max="100"
+        android:progress="0"
+        android:layout_marginBottom="8dp"/>
+
+    <TextView
+        android:id="@+id/aot_progress_percent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="end"
+        android:text="0%"
+        android:layout_marginBottom="16dp"/>
+
+    <ScrollView
+        android:id="@+id/aot_scroll_view"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:background="#222222"
+        android:padding="8dp">
+
+        <TextView
+            android:id="@+id/aot_progress_log"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#00FF00"
+            android:typeface="monospace"
+            android:textSize="12sp"
+            android:text="Initializing compiler...\n"/>
+    </ScrollView>
+
+</LinearLayout>

@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include "xbe_parser.h"
+#include "aot_cache.h"
 
 #define LOG_TAG "xemu-aot-cfg"
 #define LOGI(...) printf(LOG_TAG " " __VA_ARGS__)
@@ -19,7 +20,7 @@ extern void xemu_aot_translate_block(uint32_t start_pc, uint32_t end_pc, const u
  * In a production build, this would be replaced with Capstone.
  * For now, we scan raw bytes for branch instructions to build the CFG.
  */
-void aot_build_cfg(uint32_t entry_point, const uint8_t* text_section_buffer, uint32_t text_section_size) {
+void aot_build_cfg(uint32_t entry_point, const uint8_t* text_section_buffer, uint32_t text_section_size, aot_progress_cb progress_cb) {
     LOGI("Starting Control Flow Graph analysis at OEP: 0x%08X\n", entry_point);
     LOGI("Scanning %u bytes of .text segment...\n", text_section_size);
     
@@ -70,10 +71,20 @@ void aot_build_cfg(uint32_t entry_point, const uint8_t* text_section_buffer, uin
                 xemu_aot_translate_block(current_block_start, block_end, text_section_buffer + buffer_offset);
             }
             
+            if (progress_cb && (block_count % 1000 == 0)) {
+                int percent = (i * 100) / text_section_size;
+                char msg[256];
+                snprintf(msg, sizeof(msg), "Analyzed %u blocks... [0x%08X]", block_count, current_block_start);
+                progress_cb(percent, msg);
+            }
+            
             current_block_start = block_end + 1;
             block_count++;
         }
     }
     
+    if (progress_cb) {
+        progress_cb(100, "CFG Generation Complete.");
+    }
     LOGI("CFG Generation Complete. Extracted %u Basic Blocks.\n", block_count);
 }

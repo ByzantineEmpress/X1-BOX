@@ -19,6 +19,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ListView
 import android.widget.ProgressBar
+import android.widget.ScrollView
 import android.widget.Space
 import android.widget.TextView
 import android.widget.Toast
@@ -162,25 +163,57 @@ class GameLibraryActivity : AppCompatActivity() {
       }
     }
 
+  private var aotDialog: androidx.appcompat.app.AlertDialog? = null
+  private var aotProgressBar: ProgressBar? = null
+  private var aotProgressPercent: TextView? = null
+  private var aotProgressLog: TextView? = null
+  private var aotScrollView: ScrollView? = null
+
+  @androidx.annotation.Keep
+  fun onAotProgress(percent: Int, message: String) {
+    runOnUiThread {
+      aotProgressBar?.progress = percent
+      aotProgressPercent?.text = "$percent%"
+      aotProgressLog?.append(message + "\n")
+      aotScrollView?.post {
+        aotScrollView?.fullScroll(View.FOCUS_DOWN)
+      }
+    }
+  }
+
   private val pickAotGame = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
     if (uri != null) {
+      val view = layoutInflater.inflate(R.layout.dialog_aot_progress, null)
+      aotProgressBar = view.findViewById(R.id.aot_progress_bar)
+      aotProgressPercent = view.findViewById(R.id.aot_progress_percent)
+      aotProgressLog = view.findViewById(R.id.aot_progress_log)
+      aotScrollView = view.findViewById(R.id.aot_scroll_view)
+
+      aotDialog = MaterialAlertDialogBuilder(this)
+        .setView(view)
+        .setCancelable(false)
+        .show()
+
       Thread {
         try {
           contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
             val fd = pfd.detachFd()
             triggerAotCompileFd(fd)
             runOnUiThread {
+              aotDialog?.dismiss()
+              aotDialog = null
               Toast.makeText(this, "AOT compilation finished!", Toast.LENGTH_LONG).show()
             }
           }
         } catch (e: Exception) {
           e.printStackTrace()
           runOnUiThread {
+            aotDialog?.dismiss()
+            aotDialog = null
             Toast.makeText(this, "Failed to compile AOT cache: ${e.message}", Toast.LENGTH_LONG).show()
           }
         }
       }.start()
-      Toast.makeText(this, "AOT compilation started in background...", Toast.LENGTH_SHORT).show()
     }
   }
 

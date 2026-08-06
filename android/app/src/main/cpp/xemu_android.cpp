@@ -1613,12 +1613,41 @@ Java_com_izzy2lost_x1box_SettingsActivity_nativeSetFpJit(JNIEnv *, jobject, jboo
     }
 }
 
-extern "C" void xemu_aot_scan_xbe_fd(int fd);
+extern "C" void xemu_aot_scan_xbe_fd(int fd, void (*progress_cb)(int, const char*));
+
+static JavaVM* g_jvm = nullptr;
+static jobject g_aot_callback_obj = nullptr;
+
+static void aot_progress_wrapper(int percent, const char* message) {
+    if (!g_jvm || !g_aot_callback_obj) return;
+    JNIEnv* env = nullptr;
+    bool did_attach = false;
+    if (g_jvm->GetEnv((void**)&env, JNI_VERSION_1_6) == JNI_EDETACHED) {
+        if (g_jvm->AttachCurrentThread(&env, nullptr) != 0) return;
+        did_attach = true;
+    }
+    jclass cls = env->GetObjectClass(g_aot_callback_obj);
+    jmethodID method = env->GetMethodID(cls, "onAotProgress", "(ILjava/lang/String;)V");
+    if (method) {
+        jstring jmessage = env->NewStringUTF(message);
+        env->CallVoidMethod(g_aot_callback_obj, method, percent, jmessage);
+        env->DeleteLocalRef(jmessage);
+    }
+    env->DeleteLocalRef(cls);
+    if (did_attach) {
+        g_jvm->DetachCurrentThread();
+    }
+}
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_izzy2lost_x1box_GameLibraryActivity_triggerAotCompileFd(JNIEnv* env, jobject /* this */, jint fd) {
+Java_com_izzy2lost_x1box_GameLibraryActivity_triggerAotCompileFd(JNIEnv* env, jobject obj, jint fd) {
   if (fd >= 0) {
-    xemu_aot_scan_xbe_fd(fd);
+    env->GetJavaVM(&g_jvm);
+    g_aot_callback_obj = env->NewGlobalRef(obj);
+    xemu_aot_scan_xbe_fd(fd, aot_progress_wrapper);
+    env->DeleteGlobalRef(g_aot_callback_obj);
+    g_aot_callback_obj = nullptr;
+    g_jvm = nullptr;
   }
 }
 

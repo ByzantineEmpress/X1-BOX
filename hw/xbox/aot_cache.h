@@ -6,6 +6,8 @@
 #define AOT_CACHE_MAGIC 0x414F5443 // 'AOTC'
 #define AOT_CACHE_VERSION 1
 
+typedef void (*aot_progress_cb)(int percent, const char* message);
+
 typedef struct {
     uint32_t magic;
     uint32_t version;
