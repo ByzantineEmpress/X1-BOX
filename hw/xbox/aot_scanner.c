@@ -7,24 +7,62 @@
 #define LOG_TAG "xemu-aot"
 #define LOGI(...) printf(LOG_TAG " " __VA_ARGS__)
 
-extern void aot_build_cfg(uint32_t entry_point);
+extern void aot_build_cfg(uint32_t entry_point, const uint8_t* text_section_buffer, uint32_t text_section_size);
 
 /* 2.2.x FEX-Style AOT Recompiler */
 void xemu_aot_scan_xbe(const char* xbe_path) {
     LOGI("Initiating Ahead-of-Time (AOT) static recompilation pass for XBE: %s\n", xbe_path);
     
-    // Create a dummy XBE header to kick off the CFG analysis
-    xbe_header dummy_header = {0};
-    dummy_header.entry_point = 0x00010000 ^ 0xA8FC57AB; // Mock OEP
+    FILE* file = fopen(xbe_path, "rb");
+    if (!file) {
+        LOGI("Failed to open XBE file: %s. Reverting to JIT.\n", xbe_path);
+        return;
+    }
     
-    uint32_t oep = xbe_get_oep(&dummy_header);
+    // Read the actual XBE Header
+    xbe_header header;
+    fread(&header, sizeof(xbe_header), 1, file);
     
-    // Hand off to the Control Flow Graph parser
-    aot_build_cfg(oep);
+    if (header.magic != 0x48454258) { // 'XBEH'
+        LOGI("Invalid XBE Magic! Not a valid Xbox executable.\n");
+        fclose(file);
+        return;
+    }
     
-    // Actually block the thread to perform the massive translation!
-    LOGI("Compiling basic blocks to ARM64... This will take a while.\n");
-    sleep(10); // Artificial delay to simulate the compilation phase
+    uint32_t oep = xbe_get_oep(&header);
     
+    // Seek to the section headers to find the .text segment
+    fseek(file, header.section_headers_address - header.base_address, SEEK_SET);
+    
+    xbe_section text_section = {0};
+    for (uint32_t i = 0; i < header.number_of_sections; i++) {
+        xbe_section sec;
+        fread(&sec, sizeof(xbe_section), 1, file);
+        
+        // Simplification: Assume the first executable section is .text
+        if (sec.section_flags & 0x00000004) { // EXECUTABLE flag
+            text_section = sec;
+            break;
+        }
+    }
+    
+    if (text_section.raw_size == 0) {
+        LOGI("Failed to locate executable .text section.\n");
+        fclose(file);
+        return;
+    }
+    
+    // Allocate memory and read the .text section
+    uint8_t* text_buffer = (uint8_t*)malloc(text_section.raw_size);
+    fseek(file, text_section.raw_address, SEEK_SET);
+    fread(text_buffer, 1, text_section.raw_size, file);
+    fclose(file);
+    
+    LOGI("Loaded %u bytes from .text segment into memory.\n", text_section.raw_size);
+    
+    // Hand off to the Control Flow Graph parser to actually parse the x86 basic blocks
+    aot_build_cfg(oep, text_buffer, text_section.raw_size);
+    
+    free(text_buffer);
     LOGI("AOT Cache generated successfully! Ready for native execution.\n");
 }
