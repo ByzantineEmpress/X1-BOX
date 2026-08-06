@@ -364,15 +364,9 @@ void xbox_smc_update_tray_state(void)
         smc->intstatus_reg |= SMC_REG_INTSTATUS_TRAYOPENING;
     } else {
         BlockDriverState *bs = blk_bs(blk);
-        if (bs && bs->drv) {
-            smc->traystate_reg = SMC_REG_TRAYSTATE_MEDIA_DETECTED;
-            
-            // The user has just inserted the ROM! Trigger AOT compilation pass!
-            extern void xemu_aot_scan_xbe(const char* xbe_path);
-            xemu_aot_scan_xbe(NULL);
-        } else {
-            smc->traystate_reg = SMC_REG_TRAYSTATE_NO_MEDIA_DETECTED;
-        }
+        smc->traystate_reg = (bs && bs->drv)
+                                ? SMC_REG_TRAYSTATE_MEDIA_DETECTED
+                                : SMC_REG_TRAYSTATE_NO_MEDIA_DETECTED;
         smc->intstatus_reg |= SMC_REG_INTSTATUS_TRAYCLOSED;
     }
 

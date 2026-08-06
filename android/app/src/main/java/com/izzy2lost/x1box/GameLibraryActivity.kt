@@ -129,6 +129,10 @@ class GameLibraryActivity : AppCompatActivity() {
   private lateinit var btnViewList: MaterialButton
   private lateinit var btnViewGrid: MaterialButton
 
+  private lateinit var btnCompileAot: MaterialButton
+
+  private external fun triggerAotCompileFd(fd: Int)
+
   private var gamesFolderUri: Uri? = null
   private var scanGeneration = 0
   private var currentGames: List<GameEntry> = emptyList()
@@ -158,6 +162,28 @@ class GameLibraryActivity : AppCompatActivity() {
       }
     }
 
+  private val pickAotGame = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+    if (uri != null) {
+      Thread {
+        try {
+          contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
+            val fd = pfd.detachFd()
+            triggerAotCompileFd(fd)
+            runOnUiThread {
+              Toast.makeText(this, "AOT compilation finished!", Toast.LENGTH_LONG).show()
+            }
+          }
+        } catch (e: Exception) {
+          e.printStackTrace()
+          runOnUiThread {
+            Toast.makeText(this, "Failed to compile AOT cache: ${e.message}", Toast.LENGTH_LONG).show()
+          }
+        }
+      }.start()
+      Toast.makeText(this, "AOT compilation started in background...", Toast.LENGTH_SHORT).show()
+    }
+  }
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     OrientationLocker(this).enable()
@@ -178,6 +204,7 @@ class GameLibraryActivity : AppCompatActivity() {
     btnBootDashboard = findViewById(R.id.btn_boot_dashboard)
     btnSettings = findViewById(R.id.btn_settings)
     btnSnapshots = findViewById(R.id.btn_snapshots)
+    btnCompileAot = findViewById(R.id.btn_compile_aot)
     btnConvertIso = findViewById(R.id.btn_convert_iso)
     btnAbout = findViewById(R.id.btn_library_about)
     btnViewList = findViewById(R.id.btn_view_list)
@@ -204,6 +231,9 @@ class GameLibraryActivity : AppCompatActivity() {
     }
     btnSnapshots.setOnClickListener {
       showSnapshotStartupPicker()
+    }
+    btnCompileAot.setOnClickListener {
+      pickAotGame.launch(arrayOf("application/octet-stream", "application/x-iso9660-image"))
     }
     btnConvertIso.setOnClickListener {
       showIsoConversionPicker()

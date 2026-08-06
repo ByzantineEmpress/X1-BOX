@@ -5,7 +5,6 @@
 #include <unistd.h>
 #include "xbe_parser.h"
 #include "aot_cache.h"
-#include "system/block-backend.h"
 
 #define LOG_TAG "xemu-aot"
 #define LOGI(...) printf(LOG_TAG " " __VA_ARGS__)
@@ -13,51 +12,57 @@
 extern void aot_build_cfg(uint32_t entry_point, const uint8_t* text_section_buffer, uint32_t text_section_size);
 
 /* 2.2.x FEX-Style AOT Recompiler */
-void xemu_aot_scan_xbe(const char* xbe_path) {
-    LOGI("Initiating Ahead-of-Time (AOT) static recompilation pass...\n");
+void xemu_aot_scan_xbe_fd(int fd) {
+    LOGI("Initiating Ahead-of-Time (AOT) static recompilation pass on FD %d...\n", fd);
     
-    LOGI("Probing block devices for inserted Xbox DVD media...\n");
-    BlockBackend *blk = NULL;
-    BlockBackend *dvd_blk = NULL;
+    if (fd < 0) {
+        LOGI("Invalid file descriptor provided for AOT compilation.\n");
+        return;
+    }
+    
+    FILE* file = fdopen(fd, "rb");
+    if (!file) {
+        LOGI("Failed to fdopen %d.\n", fd);
+        return;
+    }
+    
     uint8_t sector[2048] = {0};
     uint64_t partition_offset = 0;
     uint32_t root_sector = 0;
     uint32_t root_size = 0;
+    int found = 0;
     
-    while ((blk = blk_next(blk)) != NULL) {
-        if (blk_is_inserted(blk)) {
-            // Check XISO (0), XGD1 (405798912), XGD2 (265879552), XGD3 (34078720) offsets
-            uint64_t offsets[] = { 0, 405798912, 265879552, 34078720 };
-            for (int i = 0; i < 4; i++) {
-                if (blk_pread(blk, offsets[i] + 32 * 2048, 2048, sector, 0) < 0) {
-                    continue;
-                }
-                if (memcmp(sector, "MICROSOFT*XBOX*MEDIA", 20) == 0) {
-                    dvd_blk = blk;
-                    partition_offset = offsets[i];
-                    root_sector = *(uint32_t*)(sector + 0x14);
-                    root_size = *(uint32_t*)(sector + 0x18);
-                    break;
-                }
-            }
-            if (dvd_blk) break;
+    // Check XISO (0), XGD1 (405798912), XGD2 (265879552), XGD3 (34078720) offsets
+    uint64_t offsets[] = { 0, 405798912, 265879552, 34078720 };
+    for (int i = 0; i < 4; i++) {
+        fseek(file, offsets[i] + 32 * 2048, SEEK_SET);
+        if (fread(sector, 1, 2048, file) != 2048) {
+            continue;
+        }
+        if (memcmp(sector, "MICROSOFT*XBOX*MEDIA", 20) == 0) {
+            partition_offset = offsets[i];
+            root_sector = *(uint32_t*)(sector + 0x14);
+            root_size = *(uint32_t*)(sector + 0x18);
+            found = 1;
+            break;
         }
     }
     
-    if (!dvd_blk) {
-        LOGI("No Xbox DVD media found in any block device! Aborting AOT.\n");
+    if (!found) {
+        LOGI("No valid GDFX volume descriptor found on FD %d! Aborting AOT.\n", fd);
+        fclose(file);
         return;
     }
     
-    blk = dvd_blk;
-    LOGI("ISO Media detected at offset %llu. Mounting Xbox DVD filesystem (GDFX)...\n", partition_offset);
-    
+    LOGI("ISO Media detected at offset %llu. Mounting Xbox DVD filesystem (GDFX)...\n", (unsigned long long)partition_offset);
     LOGI("Locating default.xbe on ISO filesystem... (Root sector: %u, Size: %u)\n", root_sector, root_size);
     
     uint8_t* root_dir = (uint8_t*)malloc(root_size);
-    if (blk_pread(blk, partition_offset + (root_sector * 2048), root_size, root_dir, 0) < 0) {
+    fseek(file, partition_offset + (root_sector * 2048), SEEK_SET);
+    if (fread(root_dir, 1, root_size, file) != root_size) {
         LOGI("Failed to read root directory.\n");
         free(root_dir);
+        fclose(file);
         return;
     }
     
@@ -71,8 +76,8 @@ void xemu_aot_scan_xbe(const char* xbe_path) {
         uint32_t entry_size = *(uint32_t*)(root_dir + offset + 0x08);
         uint8_t name_len = *(uint8_t*)(root_dir + offset + 0x0D);
         if (name_len == 0 || entry_sector == 0) {
-            offset += 4; // Skip padding or break
-            continue; // Basic parsing
+            offset += 4;
+            continue;
         }
         
         char name[256] = {0};
@@ -84,7 +89,6 @@ void xemu_aot_scan_xbe(const char* xbe_path) {
             break;
         }
         
-        // Next entry: align to 4 bytes
         offset += 0x0E + name_len;
         if (offset % 4 != 0) {
             offset += 4 - (offset % 4);
@@ -94,17 +98,21 @@ void xemu_aot_scan_xbe(const char* xbe_path) {
     
     if (xbe_sector == 0) {
         LOGI("default.xbe not found in ISO root directory!\n");
+        fclose(file);
         return;
     }
     
     LOGI("Extracting default.xbe (Size: %u bytes, Sector: %u) directly from ISO into memory for AOT analysis...\n", xbe_size, xbe_sector);
     
     uint8_t* xbe_buffer = (uint8_t*)malloc(xbe_size);
-    if (blk_pread(blk, partition_offset + (xbe_sector * 2048), xbe_size, xbe_buffer, 0) < 0) {
+    fseek(file, partition_offset + (xbe_sector * 2048), SEEK_SET);
+    if (fread(xbe_buffer, 1, xbe_size, file) != xbe_size) {
         LOGI("Failed to extract default.xbe from ISO.\n");
         free(xbe_buffer);
+        fclose(file);
         return;
     }
+    fclose(file);
     
     xbe_header header = {0};
     memcpy(&header, xbe_buffer, sizeof(xbe_header));
@@ -144,7 +152,6 @@ void xemu_aot_scan_xbe(const char* xbe_path) {
     
     // Hand off to the Control Flow Graph parser to actually parse the x86 basic blocks
     aot_build_cfg(oep, text_buffer, text_size);
-    
     free(text_buffer);
     
     // Serialize the compiled ARM64 cache to disk

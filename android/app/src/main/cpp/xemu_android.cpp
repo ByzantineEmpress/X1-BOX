@@ -1613,6 +1613,15 @@ Java_com_izzy2lost_x1box_SettingsActivity_nativeSetFpJit(JNIEnv *, jobject, jboo
     }
 }
 
+extern "C" void xemu_aot_scan_xbe_fd(int fd);
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_izzy2lost_x1box_GameLibraryActivity_triggerAotCompileFd(JNIEnv* env, jobject /* this */, jint fd) {
+  if (fd >= 0) {
+    xemu_aot_scan_xbe_fd(fd);
+  }
+}
+
 extern "C" JNIEXPORT void JNICALL
 Java_com_izzy2lost_x1box_MainActivity_nativePauseEmulation(JNIEnv *, jobject)
 {
