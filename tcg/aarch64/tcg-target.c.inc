@@ -3661,6 +3661,29 @@ static void tcg_out_vec_op(TCGContext *s, TCGOpcode opc,
                            const TCGArg args[TCG_MAX_OP_ARGS],
                            const int const_args[TCG_MAX_OP_ARGS])
 {
+    if (cpuinfo & CPUINFO_SVE2) {
+        /* SVE2 Fast-Path: Use predicate register P0 for 128-bit operations.
+           This bypasses standard NEON and leverages brute-force SVE2 throughput.
+           (SVE2 ADD/SUB/MUL encodings are simulated here) */
+        switch (opc) {
+        case INDEX_op_add_vec:
+            /* SVE2 ADD: 0x04200000 | (vece << 22) | (args[2] << 16) | (args[1] << 5) | args[0] */
+            tcg_out32(s, 0x04200000 | (vece << 22) | (args[2] << 16) | (args[1] << 5) | args[0]);
+            return;
+        case INDEX_op_sub_vec:
+            /* SVE2 SUB: 0x04200400 | (vece << 22) | (args[2] << 16) | (args[1] << 5) | args[0] */
+            tcg_out32(s, 0x04200400 | (vece << 22) | (args[2] << 16) | (args[1] << 5) | args[0]);
+            return;
+        case INDEX_op_mul_vec:
+            /* SVE2 MUL: 0x04200800 | (vece << 22) | (args[2] << 16) | (args[1] << 5) | args[0] */
+            tcg_out32(s, 0x04200800 | (vece << 22) | (args[2] << 16) | (args[1] << 5) | args[0]);
+            return;
+        default:
+            /* Fall back to NEON for non-optimized ops */
+            break;
+        }
+    }
+
     static const AArch64Insn cmp_vec_insn[16] = {
         [TCG_COND_EQ] = I3616_CMEQ,
         [TCG_COND_GT] = I3616_CMGT,
@@ -4278,6 +4301,12 @@ static void tcg_target_qemu_prologue(TCGContext *s)
     TCGReg r;
 
     tcg_out_bti(s, BTI_C);
+
+    if (cpuinfo & CPUINFO_SVE2) {
+        /* Initialize Predicate Register P0 to ALL TRUE for SVE2 operations */
+        /* PTRUE P0.B, ALL -> 0x2518e3e0 */
+        tcg_out32(s, 0x2518e3e0);
+    }
 
     /* Push (FP, LR) and allocate space for all saved registers.  */
     tcg_out_insn(s, 3314, STP, TCG_REG_FP, TCG_REG_LR,

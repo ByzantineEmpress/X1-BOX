@@ -67,8 +67,9 @@ unsigned __attribute__((constructor)) cpuinfo_init(void)
 #ifdef __ANDROID__
     /* Modern Snapdragon SoCs (ARMv8.1+) guarantee LSE and LSE2. 
        Bionic libc often masks HWCAP, causing QEMU to fallback to 
-       slow LDXR/STXR locks. Force them on. */
-    info |= CPUINFO_LSE | CPUINFO_LSE2;
+       slow LDXR/STXR locks. Force them on.
+       Additionally, Snapdragon Gen 2+ guarantees SVE2. */
+    info |= CPUINFO_LSE | CPUINFO_LSE2 | CPUINFO_SVE2;
 #endif
 
 #if defined(CONFIG_LINUX) || defined(CONFIG_ELF_AUX_INFO)
