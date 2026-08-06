@@ -1276,21 +1276,33 @@ static void pgraph_vk_flip_stall(NV2AState *d)
             r->blend_after_skip = true;
         }
 
-        if (xemu_get_frame_skip() && d->defer_count >= 6) {
+        if (xemu_get_frame_skip()) {
             int dc = d->defer_count;
-            int skip_pattern;
-            if (dc >= 21)      skip_pattern = 3;
-            else if (dc >= 16) skip_pattern = 2;
-            else if (dc >= 11) skip_pattern = 1;
-            else               skip_pattern = 0;
+            int cpu_pattern = 0;
+            
+            if (d->avg_frame_ns > 35000000) {
+                cpu_pattern = 2; /* < ~28 FPS -> skip 33% */
+            } else if (d->avg_frame_ns > 20000000) {
+                cpu_pattern = 1; /* < 50 FPS -> skip 20% */
+            }
 
-            r->skip_counter++;
-            switch (skip_pattern) {
-            case 0: r->frame_skip_active = (r->skip_counter % 4) == 0; break; /* 25% */
-            case 1: r->frame_skip_active = (r->skip_counter % 5) == 0; break; /* 20% */
-            case 2: r->frame_skip_active = (r->skip_counter % 3) == 0; break; /* 33% */
-            case 3: r->frame_skip_active = (r->skip_counter % 2) == 0; break; /* 50% */
-            default: r->frame_skip_active = false; break;
+            int skip_pattern = 0;
+            if (dc >= 21)      skip_pattern = 3;
+            else if (dc >= 16) skip_pattern = 2 > cpu_pattern ? 2 : cpu_pattern;
+            else if (dc >= 11) skip_pattern = 1 > cpu_pattern ? 1 : cpu_pattern;
+            else               skip_pattern = cpu_pattern;
+
+            if (skip_pattern > 0) {
+                r->skip_counter++;
+                switch (skip_pattern) {
+                case 1: r->frame_skip_active = (r->skip_counter % 5) == 0; break; /* 20% */
+                case 2: r->frame_skip_active = (r->skip_counter % 3) == 0; break; /* 33% */
+                case 3: r->frame_skip_active = (r->skip_counter % 2) == 0; break; /* 50% */
+                default: r->frame_skip_active = false; break;
+                }
+            } else {
+                r->frame_skip_active = false;
+                r->skip_counter = 0;
             }
         } else {
             r->frame_skip_active = false;
