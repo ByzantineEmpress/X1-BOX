@@ -35,6 +35,7 @@
 #include "tcg/startup.h"
 #include "tcg-accel-ops.h"
 #include "tcg-accel-ops-mttcg.h"
+#include "util/thread-affinity-android.h"
 
 typedef struct MttcgForceRcuNotifier {
     Notifier notifier;
@@ -64,6 +65,7 @@ static void mttcg_force_rcu(Notifier *notify, void *data)
 
 static void *mttcg_cpu_thread_fn(void *arg)
 {
+    xemu_set_thread_affinity_prime();
     MttcgForceRcuNotifier force_rcu;
     CPUState *cpu = arg;
 

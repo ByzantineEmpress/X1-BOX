@@ -3,6 +3,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <unistd.h>
+#include "util/thread-affinity-android.h"
 
 #ifdef __ANDROID__
 /* Snapdragon 8 Gen 2 / 8 Elite 2 CPU Topology:

@@ -1454,12 +1454,8 @@ extern "C" int SDL_main(int argc, char* argv[]) {
 extern "C" JNIEXPORT jint JNICALL
 Java_com_izzy2lost_x1box_MainActivity_nativeGetFps(JNIEnv *, jobject)
 {
-    int base_fps = static_cast<int>(g_nv2a_stats.increment_fps);
-    int fg_mode = xemu_get_frame_generation();
-    if (fg_mode > 0 && base_fps > 0) {
-        return base_fps * 2;
-    }
-    return base_fps;
+    // Return the actual raw framerate, no fake multipliers
+    return static_cast<jint>(g_nv2a_stats.increment_fps);
 }
 
 extern "C" JNIEXPORT jstring JNICALL
