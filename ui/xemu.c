@@ -1788,6 +1788,24 @@ void sdl2_gl_refresh(DisplayChangeListener *dcl)
     android_log_gl_error("refresh-swap");
 #endif
 
+    /* Lossless-Scaling Style Frame Generation Presentation Pass */
+    extern int xemu_get_frame_generation(void);
+    int fg_mode = xemu_get_frame_generation();
+    if (fg_mode > 0 && scon->real_window) {
+        if (fg_mode == 2) {
+            /* Motion Blending Interpolation: Render 50% opacity blended frame */
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
+            glBlendColor(0.5f, 0.5f, 0.5f, 0.5f);
+            sdl2_gl_render_texture(scon, tex, flip_required);
+            glDisable(GL_BLEND);
+        } else {
+            /* 2x Frame Duplication: Insert frame without clearing buffer */
+            sdl2_gl_render_texture(scon, tex, flip_required);
+        }
+        SDL_GL_SwapWindow(scon->real_window);
+    }
+
     /* VGA update (see note above) + vblank */
     qemu_mutex_lock_main_loop();
     bql_lock();

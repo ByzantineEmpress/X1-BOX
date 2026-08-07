@@ -632,6 +632,9 @@ class GameLibraryActivity : AppCompatActivity() {
 
       item.setOnClickListener { launchGame(game) }
       item.setOnLongClickListener { showGameContextMenu(game); true }
+      item.findViewById<View>(R.id.btn_game_settings)?.setOnClickListener {
+        openPerGameSettings(game)
+      }
       bindCoverArt(coverImage, game)
       gamesListContainer.addView(item)
     }
@@ -674,6 +677,9 @@ class GameLibraryActivity : AppCompatActivity() {
       bindConvertibleWarning(convertWarningText, game)
       item.setOnClickListener { launchGame(game) }
       item.setOnLongClickListener { showGameContextMenu(game); true }
+      item.findViewById<View>(R.id.btn_game_cover_settings)?.setOnClickListener {
+        openPerGameSettings(game)
+      }
       bindCoverArt(coverImage, game)
     }
 
@@ -1839,6 +1845,14 @@ class GameLibraryActivity : AppCompatActivity() {
 
     Toast.makeText(this, getString(R.string.library_delete_success, game.title), Toast.LENGTH_SHORT).show()
     loadGames()
+  }
+
+  private fun openPerGameSettings(game: GameEntry) {
+    startActivity(
+      Intent(this, PerGameSettingsActivity::class.java)
+        .putExtra(PerGameSettingsActivity.EXTRA_GAME_TITLE, game.title)
+        .putExtra(PerGameSettingsActivity.EXTRA_GAME_RELATIVE_PATH, game.relativePath)
+    )
   }
 
   private fun showGameContextMenu(game: GameEntry) {
