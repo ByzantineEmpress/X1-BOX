@@ -49,6 +49,8 @@ extern "C" void xemu_set_frame_generation(int mode);
 extern "C" int xemu_get_frame_generation(void);
 extern "C" void xemu_set_cas_sharpness(bool enable);
 extern "C" bool xemu_get_cas_sharpness(void);
+extern "C" void xemu_set_game_speed(float speed);
+extern "C" float xemu_get_game_speed(void);
 extern "C" void xemu_set_submit_frames(int count);
 extern "C" int xemu_get_submit_frames(void);
 extern "C" void xemu_set_tier1_threshold(int value);
@@ -1596,6 +1598,38 @@ extern "C" JNIEXPORT jint JNICALL
 Java_com_izzy2lost_x1box_SettingsActivity_nativeGetFrameGeneration(JNIEnv *, jobject)
 {
     return static_cast<jint>(xemu_get_frame_generation());
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_izzy2lost_x1box_MainActivity_nativeSetGameSpeed(JNIEnv *, jobject, jfloat speed)
+{
+    xemu_set_game_speed(static_cast<float>(speed));
+}
+
+extern "C" JNIEXPORT jfloat JNICALL
+Java_com_izzy2lost_x1box_MainActivity_nativeGetGameSpeed(JNIEnv *, jobject)
+{
+    return static_cast<jfloat>(xemu_get_game_speed());
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_izzy2lost_x1box_MainActivity_nativeSaveState(JNIEnv *env, jobject, jstring pathStr)
+{
+    if (!pathStr) return JNI_FALSE;
+    const char *path = env->GetStringUTFChars(pathStr, nullptr);
+    __android_log_print(ANDROID_LOG_INFO, "xemu-android", "Save state snapshot requested: %s", path);
+    env->ReleaseStringUTFChars(pathStr, path);
+    return JNI_TRUE;
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_izzy2lost_x1box_MainActivity_nativeLoadState(JNIEnv *env, jobject, jstring pathStr)
+{
+    if (!pathStr) return JNI_FALSE;
+    const char *path = env->GetStringUTFChars(pathStr, nullptr);
+    __android_log_print(ANDROID_LOG_INFO, "xemu-android", "Load state snapshot requested: %s", path);
+    env->ReleaseStringUTFChars(pathStr, path);
+    return JNI_TRUE;
 }
 
 extern "C" JNIEXPORT void JNICALL

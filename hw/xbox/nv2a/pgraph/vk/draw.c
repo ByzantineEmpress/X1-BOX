@@ -34,6 +34,7 @@ static bool g_xemu_async_compile = false;
 static bool g_xemu_frame_skip = false;
 static int g_xemu_frame_generation = 0;
 static bool g_xemu_cas_sharpness = false;
+static float g_xemu_game_speed = 1.0f;
 static int g_xemu_submit_frames = 3;
 
 struct OptBisectStats g_opt_stats;
@@ -291,6 +292,16 @@ void xemu_set_cas_sharpness(bool enable)
 bool xemu_get_cas_sharpness(void)
 {
     return g_xemu_cas_sharpness;
+}
+
+void xemu_set_game_speed(float speed)
+{
+    g_xemu_game_speed = (speed > 0.1f) ? speed : 1.0f;
+}
+
+float xemu_get_game_speed(void)
+{
+    return g_xemu_game_speed;
 }
 
 void xemu_set_submit_frames(int count)

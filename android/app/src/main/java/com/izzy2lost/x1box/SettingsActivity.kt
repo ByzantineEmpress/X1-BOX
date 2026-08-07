@@ -393,6 +393,7 @@ class SettingsActivity : AppCompatActivity() {
     when (displayMode) {
       1    -> toggleDisplayMode.check(R.id.btn_display_4_3)
       2    -> toggleDisplayMode.check(R.id.btn_display_16_9)
+      3    -> toggleDisplayMode.check(R.id.btn_display_21_9)
       else -> toggleDisplayMode.check(R.id.btn_display_stretch)
     }
 
@@ -508,7 +509,8 @@ class SettingsActivity : AppCompatActivity() {
       val selectedDisplayMode = when (toggleDisplayMode.checkedButtonId) {
         R.id.btn_display_4_3  -> 1
         R.id.btn_display_16_9 -> 2
-        else                   -> 0
+        R.id.btn_display_21_9 -> 3
+        else                  -> 0
       }
       val selectedScale = when (toggleScale.checkedButtonId) {
         R.id.btn_scale_2x -> 2

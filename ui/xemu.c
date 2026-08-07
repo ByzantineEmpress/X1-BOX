@@ -274,9 +274,14 @@ static void sdl2_gl_render_texture(struct sdl2_console *scon,
     vw = w;
     vh = h;
     if (g_android_display_mode != 0) {
-        float target = (g_android_display_mode == 1)
-                           ? (4.0f / 3.0f)
-                           : (16.0f / 9.0f);
+        float target = 16.0f / 9.0f;
+        if (g_android_display_mode == 1) {
+            target = 4.0f / 3.0f;
+        } else if (g_android_display_mode == 2) {
+            target = 16.0f / 9.0f;
+        } else if (g_android_display_mode == 3) {
+            target = 21.0f / 9.0f;
+        }
         float screen = (float)w / (float)h;
         if (screen > target) {
             vw = (int)(h * target);
