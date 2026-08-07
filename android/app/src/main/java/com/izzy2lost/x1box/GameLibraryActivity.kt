@@ -132,7 +132,8 @@ class GameLibraryActivity : AppCompatActivity() {
 
   private lateinit var btnCompileAot: MaterialButton
 
-  private external fun triggerAotCompileFd(fd: Int)
+  private external fun nativeGetTbCacheStats(): String
+  private external fun nativeFlushTbCache()
 
   private var gamesFolderUri: Uri? = null
   private var scanGeneration = 0
@@ -163,58 +164,34 @@ class GameLibraryActivity : AppCompatActivity() {
       }
     }
 
-  private var aotDialog: androidx.appcompat.app.AlertDialog? = null
-  private var aotProgressBar: ProgressBar? = null
-  private var aotProgressPercent: TextView? = null
-  private var aotProgressLog: TextView? = null
-  private var aotScrollView: ScrollView? = null
-
-  @androidx.annotation.Keep
-  fun onAotProgress(percent: Int, message: String) {
-    runOnUiThread {
-      aotProgressBar?.progress = percent
-      aotProgressPercent?.text = "$percent%"
-      aotProgressLog?.append(message + "\n")
-      aotScrollView?.post {
-        aotScrollView?.fullScroll(View.FOCUS_DOWN)
-      }
+  private fun showTbCacheDialog() {
+    val stats = try { nativeGetTbCacheStats() } catch (e: Throwable) {
+      "TB Cache not available (emulator not running)"
     }
-  }
 
-  private val pickAotGame = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-    if (uri != null) {
-      val view = layoutInflater.inflate(R.layout.dialog_aot_progress, null)
-      aotProgressBar = view.findViewById(R.id.aot_progress_bar)
-      aotProgressPercent = view.findViewById(R.id.aot_progress_percent)
-      aotProgressLog = view.findViewById(R.id.aot_progress_log)
-      aotScrollView = view.findViewById(R.id.aot_scroll_view)
+    val view = layoutInflater.inflate(R.layout.dialog_aot_progress, null)
+    val titleView = view.findViewById<TextView>(R.id.aot_progress_title)
+    val progressBar = view.findViewById<ProgressBar>(R.id.aot_progress_bar)
+    val percentView = view.findViewById<TextView>(R.id.aot_progress_percent)
+    val logView = view.findViewById<TextView>(R.id.aot_progress_log)
 
-      aotDialog = MaterialAlertDialogBuilder(this)
-        .setView(view)
-        .setCancelable(false)
-        .show()
+    titleView.text = "Translation Block Cache"
+    progressBar.visibility = View.GONE
+    percentView.visibility = View.GONE
+    logView.text = stats + "\n\nThe TB cache records which code blocks\nare compiled during gameplay and\npre-translates them on the next launch\nto eliminate JIT stutter."
 
-      Thread {
+    MaterialAlertDialogBuilder(this)
+      .setView(view)
+      .setPositiveButton("Save Cache Now") { _, _ ->
         try {
-          contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
-            val fd = pfd.detachFd()
-            triggerAotCompileFd(fd)
-            runOnUiThread {
-              aotDialog?.dismiss()
-              aotDialog = null
-              Toast.makeText(this, "AOT compilation finished!", Toast.LENGTH_LONG).show()
-            }
-          }
+          nativeFlushTbCache()
+          Toast.makeText(this, "TB cache saved!", Toast.LENGTH_SHORT).show()
         } catch (e: Throwable) {
-          e.printStackTrace()
-          runOnUiThread {
-            aotDialog?.dismiss()
-            aotDialog = null
-            Toast.makeText(this, "Failed to compile AOT cache: ${e.message}", Toast.LENGTH_LONG).show()
-          }
+          Toast.makeText(this, "Failed to save: ${e.message}", Toast.LENGTH_SHORT).show()
         }
-      }.start()
-    }
+      }
+      .setNegativeButton(android.R.string.cancel, null)
+      .show()
   }
 
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -266,7 +243,7 @@ class GameLibraryActivity : AppCompatActivity() {
       showSnapshotStartupPicker()
     }
     btnCompileAot.setOnClickListener {
-      pickAotGame.launch(arrayOf("application/octet-stream", "application/x-iso9660-image"))
+      showTbCacheDialog()
     }
     btnConvertIso.setOnClickListener {
       showIsoConversionPicker()

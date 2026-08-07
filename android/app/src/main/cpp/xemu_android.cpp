@@ -1613,55 +1613,49 @@ Java_com_izzy2lost_x1box_SettingsActivity_nativeSetFpJit(JNIEnv *, jobject, jboo
     }
 }
 
-extern "C" void xemu_aot_scan_xbe_fd(int fd, void (*progress_cb)(int, const char*));
+/* ---- Real TB Cache JNI Bridge ---- */
 
-static JavaVM* g_jvm = nullptr;
-static jobject g_aot_callback_obj = nullptr;
-static jmethodID g_aot_method = nullptr;
-
-static void aot_progress_wrapper(int percent, const char* message) {
-    if (!g_jvm || !g_aot_callback_obj) return;
-    if (!message) message = "";
-    JNIEnv* env = nullptr;
-    bool did_attach = false;
-    if (g_jvm->GetEnv((void**)&env, JNI_VERSION_1_6) == JNI_EDETACHED) {
-        if (g_jvm->AttachCurrentThread(&env, nullptr) != 0) return;
-        did_attach = true;
-    }
-    jclass cls = env->GetObjectClass(g_aot_callback_obj);
-    if (!g_aot_method) {
-        g_aot_method = env->GetMethodID(cls, "onAotProgress", "(ILjava/lang/String;)V");
-        if (env->ExceptionCheck()) {
-            env->ExceptionClear();
-        }
-    }
-    if (g_aot_method) {
-        jstring jmessage = env->NewStringUTF(message);
-        if (jmessage) {
-            env->CallVoidMethod(g_aot_callback_obj, g_aot_method, percent, jmessage);
-            if (env->ExceptionCheck()) {
-                env->ExceptionClear();
-            }
-            env->DeleteLocalRef(jmessage);
-        }
-    }
-    env->DeleteLocalRef(cls);
-    if (did_attach) {
-        g_jvm->DetachCurrentThread();
-    }
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_izzy2lost_x1box_GameLibraryActivity_nativeGetTbCacheStats(JNIEnv* env, jobject) {
+#if XEMU_OPT_TB_CACHE_HINTS
+    extern uint64_t tb_cache_stats_lookup_hits;
+    extern uint64_t tb_cache_stats_lookup_misses;
+    char buf[512];
+    uint64_t total = tb_cache_stats_lookup_hits + tb_cache_stats_lookup_misses;
+    double hit_rate = total > 0 ? (double)tb_cache_stats_lookup_hits / total * 100.0 : 0.0;
+    snprintf(buf, sizeof(buf),
+             "TB Cache Statistics:\n"
+             "  Lookup hits:   %llu\n"
+             "  Lookup misses: %llu\n"
+             "  Hit rate:      %.1f%%\n"
+             "  Total lookups: %llu",
+             (unsigned long long)tb_cache_stats_lookup_hits,
+             (unsigned long long)tb_cache_stats_lookup_misses,
+             hit_rate,
+             (unsigned long long)total);
+    return env->NewStringUTF(buf);
+#else
+    return env->NewStringUTF("TB Cache hints not enabled in this build.");
+#endif
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_izzy2lost_x1box_GameLibraryActivity_triggerAotCompileFd(JNIEnv* env, jobject obj, jint fd) {
-  if (fd >= 0) {
-    env->GetJavaVM(&g_jvm);
-    g_aot_callback_obj = env->NewGlobalRef(obj);
-    g_aot_method = nullptr;
-    xemu_aot_scan_xbe_fd(fd, aot_progress_wrapper);
-    env->DeleteGlobalRef(g_aot_callback_obj);
-    g_aot_callback_obj = nullptr;
-    g_jvm = nullptr;
-  }
+Java_com_izzy2lost_x1box_GameLibraryActivity_nativeFlushTbCache(JNIEnv*, jobject) {
+#if XEMU_OPT_TB_CACHE_HINTS
+    const char *storage = SDL_AndroidGetInternalStoragePath();
+    if (storage) {
+        char dir_path[PATH_MAX];
+        snprintf(dir_path, sizeof(dir_path), "%s/x1box", storage);
+        mkdir(dir_path, 0755);
+        char cache_path[PATH_MAX];
+        snprintf(cache_path, sizeof(cache_path), "%s/tb_cache.bin", dir_path);
+        extern uint32_t tb_cache_compute_game_hash(const char*, const char*);
+        uint32_t game_hash = tb_cache_compute_game_hash(
+            g_config.sys.files.bootrom_path, g_config.sys.files.flashrom_path);
+        game_hash ^= (xemu_get_fp_safe() ? 0x1u : 0) | (xemu_get_fp_jit() ? 0x2u : 0);
+        tb_cache_save(cache_path, game_hash);
+    }
+#endif
 }
 
 extern "C" JNIEXPORT void JNICALL

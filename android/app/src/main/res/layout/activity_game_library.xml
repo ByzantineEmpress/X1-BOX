@@ -126,7 +126,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:text="Compile AOT Cache"
+            android:text="TB Cache Stats"
             android:textColor="@color/game_library_top_button_content"
             app:icon="@drawable/ic_xemu_info"
             app:iconGravity="textStart"
