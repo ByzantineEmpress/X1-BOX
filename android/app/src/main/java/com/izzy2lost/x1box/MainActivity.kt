@@ -160,7 +160,6 @@ class MainActivity : SDLActivity(), InputManager.InputDeviceListener {
     initializeSwipeMenuGesture()
     setupOnScreenController()
     setupFpsOverlay()
-    setupQuickActionOverlay()
     setupControllerDetection()
     hideSystemUI()
   }
@@ -303,71 +302,7 @@ class MainActivity : SDLActivity(), InputManager.InputDeviceListener {
 
   private fun dp(value: Int): Int = (value * resources.displayMetrics.density).roundToInt()
 
-  private var currentSpeedIndex = 0
-  private val speedValues = floatArrayOf(1.0f, 1.5f, 2.0f, 3.0f)
-  private val speedLabels = arrayOf("100% (Normal)", "150% (1.5x Turbo)", "200% (2.0x Turbo)", "300% (3.0x Max)")
 
-  private fun setupQuickActionOverlay() {
-    val container = LinearLayout(this).apply {
-      orientation = LinearLayout.HORIZONTAL
-      gravity = Gravity.CENTER_VERTICAL
-      setPadding(dp(8), dp(4), dp(8), dp(4))
-      setBackgroundColor(Color.argb(180, 20, 26, 32))
-    }
-
-    val turboBtn = TextView(this).apply {
-      text = "⚡ Turbo"
-      setTextColor(ContextCompat.getColor(this@MainActivity, R.color.xemu_green_light))
-      setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
-      setPadding(dp(8), dp(4), dp(8), dp(4))
-      setOnClickListener {
-        currentSpeedIndex = (currentSpeedIndex + 1) % speedValues.size
-        val newSpeed = speedValues[currentSpeedIndex]
-        nativeSetGameSpeed(newSpeed)
-        Toast.makeText(this@MainActivity, "⚡ Speed: ${speedLabels[currentSpeedIndex]}", Toast.LENGTH_SHORT).show()
-      }
-    }
-
-    val saveBtn = TextView(this).apply {
-      text = "💾 Save"
-      setTextColor(Color.WHITE)
-      setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
-      setPadding(dp(8), dp(4), dp(8), dp(4))
-      setOnClickListener {
-        val slotFile = File(filesDir, "quick_slot_1.sav").absolutePath
-        nativeSaveState(slotFile)
-        Toast.makeText(this@MainActivity, "💾 Quick State Saved (Slot 1)", Toast.LENGTH_SHORT).show()
-      }
-    }
-
-    val loadBtn = TextView(this).apply {
-      text = "📂 Load"
-      setTextColor(Color.WHITE)
-      setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
-      setPadding(dp(8), dp(4), dp(8), dp(4))
-      setOnClickListener {
-        val slotFile = File(filesDir, "quick_slot_1.sav").absolutePath
-        nativeLoadState(slotFile)
-        Toast.makeText(this@MainActivity, "📂 Quick State Loaded (Slot 1)", Toast.LENGTH_SHORT).show()
-      }
-    }
-
-    container.addView(turboBtn)
-    container.addView(saveBtn)
-    container.addView(loadBtn)
-
-    val params = RelativeLayout.LayoutParams(
-      RelativeLayout.LayoutParams.WRAP_CONTENT,
-      RelativeLayout.LayoutParams.WRAP_CONTENT
-    ).apply {
-      addRule(RelativeLayout.ALIGN_PARENT_TOP)
-      addRule(RelativeLayout.ALIGN_PARENT_END)
-      topMargin = dp(8)
-      marginEnd = dp(16)
-    }
-
-    mLayout?.addView(container, params)
-  }
 
   private fun updateFpsOverlayPosition() {
     val hostLayout = mLayout ?: return
