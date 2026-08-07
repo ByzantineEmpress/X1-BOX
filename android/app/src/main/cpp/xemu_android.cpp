@@ -1093,6 +1093,7 @@ static int SDLCALL QemuThreadMain(void* data) {
 
 #if XEMU_OPT_TB_CACHE_HINTS
 extern "C" void tb_cache_save(const char *path, uint32_t game_hash);
+extern "C" void tb_cache_set_save_target(const char *path, uint32_t game_hash);
 extern "C" int  tb_cache_load(const char *path, uint32_t game_hash);
 extern "C" uint32_t tb_cache_compute_game_hash(const char *bootrom_path,
                                                const char *flashrom_path);
@@ -1143,6 +1144,7 @@ extern "C" int xemu_android_main(int argc, char** argv) {
     int nhints = tb_cache_load(cache_path, game_hash);
     __android_log_print(ANDROID_LOG_INFO, "xemu-android",
                         "TB cache: loaded %d hints from %s", nhints, cache_path);
+    tb_cache_set_save_target(cache_path, game_hash);
   }
 #endif
 
