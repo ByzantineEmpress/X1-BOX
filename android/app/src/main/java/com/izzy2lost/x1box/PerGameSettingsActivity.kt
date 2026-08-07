@@ -243,6 +243,7 @@ class PerGameSettingsActivity : AppCompatActivity() {
     GpuDriverHelper.init(this)
     val savedOverrides = PerGameSettingsManager.loadOverrides(this, relativePath)
     bindFields(savedOverrides)
+    updateBadgeSummary()
 
     findViewById<MaterialButton>(R.id.btn_per_game_settings_clear).setOnClickListener {
       PerGameSettingsManager.clearOverrides(this, relativePath)
@@ -265,16 +266,44 @@ class PerGameSettingsActivity : AppCompatActivity() {
 
       dropdown.setAdapter(ArrayAdapter(this, android.R.layout.simple_list_item_1, labels))
       dropdown.setOnItemClickListener { _, _, position, _ ->
-        fieldSelections[field.key] = field.options[position].value
+        val selectedVal = field.options[position].value
+        fieldSelections[field.key] = selectedVal
+        updateFieldUi(field, selectedVal)
+        updateBadgeSummary()
       }
 
       val selectedValue = savedOverrides[field.key]
       fieldSelections[field.key] = selectedValue
       setFieldSelection(dropdown, field, selectedValue)
-      inputLayout.helperText = getString(
-        R.string.per_game_settings_global_value,
-        describeGlobalValue(field),
-      )
+      updateFieldUi(field, selectedValue)
+    }
+  }
+
+  private fun updateFieldUi(field: SettingField, selectedValue: String?) {
+    val inputLayout = findViewById<TextInputLayout>(field.inputLayoutId)
+    val globalLabel = describeGlobalValue(field)
+    if (selectedValue != null) {
+      val matchingOption = field.options.firstOrNull { it.value == selectedValue } ?: field.options.first()
+      val selectedLabel = optionLabel(matchingOption)
+      inputLayout.helperText = getString(R.string.per_game_settings_custom_value, selectedLabel, globalLabel)
+      inputLayout.setHelperTextColor(android.content.res.ColorStateList.valueOf(getColor(R.color.xemu_green_light)))
+    } else {
+      inputLayout.helperText = getString(R.string.per_game_settings_global_value, globalLabel)
+      inputLayout.setHelperTextColor(android.content.res.ColorStateList.valueOf(getColor(R.color.xemu_text_muted)))
+    }
+  }
+
+  private fun updateBadgeSummary() {
+    val activeOverridesCount = fieldSelections.values.count { it != null }
+    val badge = findViewById<TextView>(R.id.tv_per_game_override_badge)
+    if (badge != null) {
+      if (activeOverridesCount > 0) {
+        badge.text = getString(R.string.per_game_settings_overrides_active, activeOverridesCount)
+        badge.setTextColor(getColor(R.color.xemu_green_light))
+      } else {
+        badge.text = getString(R.string.per_game_settings_overrides_none)
+        badge.setTextColor(getColor(R.color.xemu_text_muted))
+      }
     }
   }
 

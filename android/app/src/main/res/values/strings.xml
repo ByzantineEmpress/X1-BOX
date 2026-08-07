@@ -376,4 +376,8 @@
   <string name="per_game_settings_saved">Per-game settings saved</string>
   <string name="per_game_settings_cleared">Per-game settings cleared</string>
   <string name="per_game_settings_missing_game">This game could not be resolved.</string>
+  <string name="per_game_settings_overrides_active">⚡ %1$d Custom Overrides Active</string>
+  <string name="per_game_settings_overrides_none">Global Defaults (No Overrides)</string>
+  <string name="per_game_settings_custom_value">★ Custom: %1$s  (Global: %2$s)</string>
+  <string name="per_game_section_gpu">🚀 GPU &amp; Custom Drivers</string>
 </resources>
