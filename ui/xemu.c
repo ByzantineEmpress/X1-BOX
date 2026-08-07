@@ -1390,7 +1390,7 @@ void xemu_android_display_loop(void)
     }
 #ifdef __ANDROID__
     xemu_android_refresh_frame_limit_from_env();
-    SDL_GL_SetSwapInterval(g_config.display.window.vsync ? 1 : 0);
+    SDL_GL_SetSwapInterval(1);
     xemu_hud_init(m_window, m_context);
 #endif
     tcg_register_init_ctx();
@@ -1759,18 +1759,6 @@ void sdl2_gl_refresh(DisplayChangeListener *dcl)
     bql_lock();
     sdl2_poll_events(scon);
 
-    static GLuint s_prev_tex = 0;
-    static GLuint s_curr_tex = 0;
-
-    if (tex != 0) {
-        if (s_curr_tex != tex) {
-            s_prev_tex = s_curr_tex;
-            s_curr_tex = tex;
-        }
-    } else if (s_curr_tex != 0) {
-        tex = s_curr_tex;
-    }
-
     if (tex == 0) {
         glClearColor(0, 0, 0, 0);
         glClear(GL_COLOR_BUFFER_BIT);
@@ -1788,7 +1776,7 @@ void sdl2_gl_refresh(DisplayChangeListener *dcl)
     android_log_gl_error("refresh-blit");
 #endif
 
-    // Release BQL before swapping (which may sleep if swap interval is not immediate)
+    // Release BQL before swapping
     bql_unlock();
     qemu_mutex_unlock_main_loop();
 
@@ -1805,18 +1793,9 @@ void sdl2_gl_refresh(DisplayChangeListener *dcl)
 #ifdef __ANDROID__
     android_log_gl_error("refresh-finish");
 #endif
-    SDL_GL_SwapWindow(scon->real_window);
-#ifdef __ANDROID__
-    android_log_gl_error("refresh-swap");
-#endif
 
-    extern bool g_xemu_fxaa;
-
-    // Presentation Pass with optional FXAA post-processing shader
+    // Clean, honest single 1:1 presentation swap
     if (scon->real_window) {
-        if (g_xemu_fxaa && s_curr_tex != 0) {
-            sdl2_gl_render_texture(scon, s_curr_tex, flip_required);
-        }
         SDL_GL_SwapWindow(scon->real_window);
     }
 
