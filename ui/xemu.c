@@ -1754,11 +1754,16 @@ void sdl2_gl_refresh(DisplayChangeListener *dcl)
     bql_lock();
     sdl2_poll_events(scon);
 
-    static GLuint s_last_valid_tex = 0;
+    static GLuint s_prev_tex = 0;
+    static GLuint s_curr_tex = 0;
+
     if (tex != 0) {
-        s_last_valid_tex = tex;
-    } else if (s_last_valid_tex != 0) {
-        tex = s_last_valid_tex;
+        if (s_curr_tex != tex) {
+            s_prev_tex = s_curr_tex;
+            s_curr_tex = tex;
+        }
+    } else if (s_curr_tex != 0) {
+        tex = s_curr_tex;
     }
 
     if (tex == 0) {
@@ -1803,17 +1808,21 @@ void sdl2_gl_refresh(DisplayChangeListener *dcl)
     /* Lossless-Scaling Style Frame Generation Presentation Pass */
     extern int xemu_get_frame_generation(void);
     int fg_mode = xemu_get_frame_generation();
-    if (fg_mode > 0 && scon->real_window) {
-        if (fg_mode == 2) {
-            /* Motion Blending Interpolation: Render 50% opacity blended frame */
+    if (fg_mode > 0 && scon->real_window && s_curr_tex != 0) {
+        if (fg_mode == 2 && s_prev_tex != 0 && s_prev_tex != s_curr_tex) {
+            /* Motion Blending Interpolation:
+             * 1. Draw s_prev_tex at 100% opacity to establish solid non-darkened base frame
+             * 2. Blend s_curr_tex at 50% opacity over s_prev_tex
+             */
+            sdl2_gl_render_texture(scon, s_prev_tex, flip_required);
             glEnable(GL_BLEND);
             glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
             glBlendColor(0.5f, 0.5f, 0.5f, 0.5f);
-            sdl2_gl_render_texture(scon, tex, flip_required);
+            sdl2_gl_render_texture(scon, s_curr_tex, flip_required);
             glDisable(GL_BLEND);
         } else {
-            /* 2x Frame Duplication: Insert frame without clearing buffer */
-            sdl2_gl_render_texture(scon, tex, flip_required);
+            /* 2x Frame Duplication: Re-render s_curr_tex at 100% opacity */
+            sdl2_gl_render_texture(scon, s_curr_tex, flip_required);
         }
         SDL_GL_SwapWindow(scon->real_window);
     }
