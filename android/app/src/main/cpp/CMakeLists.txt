@@ -1112,6 +1112,10 @@ target_include_directories(xemu_core PRIVATE
   $<$<BOOL:${XEMU_ENABLE_VULKAN}>:${volk_SOURCE_DIR}>
 )
 
+target_sources(xemu_core PRIVATE
+  choreographer.cpp
+)
+
 add_dependencies(xemu_core glib_ep)
 
 target_link_libraries(xemu_core PRIVATE
@@ -1179,6 +1183,7 @@ add_dependencies(slirp_static glib_ep)
 add_library(xemu SHARED
   xemu_android.cpp
   android_crash_handler.cpp
+  choreographer.cpp
   vmstate_if_android.c
   xemu_fatx_import.c
   xemu_hdd_tools_jni.c

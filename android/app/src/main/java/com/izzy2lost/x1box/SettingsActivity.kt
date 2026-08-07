@@ -192,8 +192,6 @@ class SettingsActivity : AppCompatActivity() {
   private lateinit var layoutAdvancedExperimentalContent: LinearLayout
   private lateinit var dropdownUiOrientation: AutoCompleteTextView
   private lateinit var dropdownGameOrientation: AutoCompleteTextView
-  private lateinit var dropdownFrameGeneration: AutoCompleteTextView
-  private var selectedFrameGeneration: Int = 0
   private lateinit var inputEepromLanguage: TextInputLayout
   private lateinit var inputEepromVideoStandard: TextInputLayout
   private lateinit var inputEepromAspectRatio: TextInputLayout
@@ -344,7 +342,6 @@ class SettingsActivity : AppCompatActivity() {
     layoutAdvancedExperimentalContent = findViewById(R.id.layout_advanced_experimental_content)
     dropdownUiOrientation = findViewById(R.id.dropdown_app_orientation)
     dropdownGameOrientation = findViewById(R.id.dropdown_game_orientation)
-    dropdownFrameGeneration = findViewById(R.id.dropdown_frame_generation)
     driverStatusText      = findViewById(R.id.settings_gpu_driver_status)
     gpuNotSupportedText   = findViewById(R.id.settings_gpu_not_supported)
     btnInstallDriver      = findViewById(R.id.btn_install_driver)
@@ -451,17 +448,6 @@ class SettingsActivity : AppCompatActivity() {
     switchCasSharpness.isChecked =
       prefs.getBoolean("setting_cas_sharpness", false)
 
-    val frameGenOptions = listOf(
-      getString(R.string.settings_frame_gen_off),
-      getString(R.string.settings_frame_gen_2x_dup),
-      getString(R.string.settings_frame_gen_2x_blend)
-    )
-    dropdownFrameGeneration.setAdapter(ArrayAdapter(this, android.R.layout.simple_list_item_1, frameGenOptions))
-    selectedFrameGeneration = prefs.getInt("frame_generation", 0).coerceIn(0, 2)
-    dropdownFrameGeneration.setText(frameGenOptions[selectedFrameGeneration], false)
-    dropdownFrameGeneration.setOnItemClickListener { _, _, position, _ ->
-      selectedFrameGeneration = position
-    }
     switchDrawReorder.isChecked  = prefs.getBoolean("draw_reorder", true)
     switchDrawMerge.isChecked    = prefs.getBoolean("draw_merge", true)
     switchAsyncCompile.isChecked = prefs.getBoolean("async_compile", false)
@@ -563,7 +549,6 @@ class SettingsActivity : AppCompatActivity() {
         .putBoolean("setting_skip_boot_anim", switchSkipBootAnim.isChecked)
         .putBoolean("frame_skip", switchFrameSkip.isChecked)
         .putBoolean("setting_cas_sharpness", switchCasSharpness.isChecked)
-        .putInt("frame_generation", selectedFrameGeneration)
         .putBoolean("draw_reorder", switchDrawReorder.isChecked)
         .putBoolean("draw_merge", switchDrawMerge.isChecked)
         .putBoolean("async_compile", switchAsyncCompile.isChecked)

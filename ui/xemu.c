@@ -1810,25 +1810,8 @@ void sdl2_gl_refresh(DisplayChangeListener *dcl)
     android_log_gl_error("refresh-swap");
 #endif
 
-    /* Lossless-Scaling Style Frame Generation Presentation Pass */
-    extern int xemu_get_frame_generation(void);
-    int fg_mode = xemu_get_frame_generation();
-    if (fg_mode > 0 && scon->real_window && s_curr_tex != 0) {
-        if (fg_mode == 2 && s_prev_tex != 0 && s_prev_tex != s_curr_tex) {
-            /* Motion Blending Interpolation:
-             * 1. Draw s_prev_tex at 100% opacity to establish solid non-darkened base frame
-             * 2. Blend s_curr_tex at 50% opacity over s_prev_tex
-             */
-            sdl2_gl_render_texture(scon, s_prev_tex, flip_required);
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_CONSTANT_ALPHA, GL_ONE_MINUS_CONSTANT_ALPHA);
-            glBlendColor(0.5f, 0.5f, 0.5f, 0.5f);
-            sdl2_gl_render_texture(scon, s_curr_tex, flip_required);
-            glDisable(GL_BLEND);
-        } else {
-            /* 2x Frame Duplication: Re-render s_curr_tex at 100% opacity */
-            sdl2_gl_render_texture(scon, s_curr_tex, flip_required);
-        }
+    // Pure 1:1 Frame Presentation
+    if (scon->real_window) {
         SDL_GL_SwapWindow(scon->real_window);
     }
 

@@ -1614,6 +1614,10 @@ static void render_display(PGRAPHState *pg, SurfaceBinding *surface)
         .commandBufferCount = 1,
         .pCommandBuffers = &cmd,
     };
+#ifdef __ANDROID__
+    extern void xemu_wait_for_vsync(void);
+    xemu_wait_for_vsync();
+#endif
     VK_CHECK(vkQueueSubmit(r->queue, 1, &submit_info, img->fence));
     img->fence_submitted = true;
     img->valid = true;
