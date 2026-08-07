@@ -1698,10 +1698,6 @@ void pgraph_vk_finalize_display(PGRAPHState *pg)
 
 void pgraph_vk_render_display(PGRAPHState *pg)
 {
-#ifdef __ANDROID__
-    extern void xemu_wait_for_vsync(void);
-    xemu_wait_for_vsync();
-#endif
     NV2AState *d = container_of(pg, NV2AState, pgraph);
     PGRAPHVkState *r = pg->vk_renderer_state;
 
