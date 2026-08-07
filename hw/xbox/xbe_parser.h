@@ -2,6 +2,7 @@
 #define XBE_PARSER_H
 
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef struct {
     uint32_t magic; /* 'XBEH' */
@@ -14,9 +15,8 @@ typedef struct {
     uint32_t certificate_address;
     uint32_t number_of_sections;
     uint32_t section_headers_address;
-    
-    // Original Entry Point (OEP) obfuscated by a magic key
-    uint32_t entry_point; 
+    uint32_t init_flags; /* Initialization Flags */
+    uint32_t entry_point; /* Original Entry Point (OEP) obfuscated by magic key */
 } xbe_header;
 
 typedef struct {
