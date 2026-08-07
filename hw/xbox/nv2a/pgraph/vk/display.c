@@ -1615,12 +1615,6 @@ static void render_display(PGRAPHState *pg, SurfaceBinding *surface)
         .commandBufferCount = 1,
         .pCommandBuffers = &cmd,
     };
-#ifdef __ANDROID__
-    extern void xemu_wait_for_vsync(void);
-    bql_unlock();
-    xemu_wait_for_vsync();
-    bql_lock();
-#endif
     VK_CHECK(vkQueueSubmit(r->queue, 1, &submit_info, img->fence));
     img->fence_submitted = true;
     img->valid = true;
@@ -1704,6 +1698,10 @@ void pgraph_vk_finalize_display(PGRAPHState *pg)
 
 void pgraph_vk_render_display(PGRAPHState *pg)
 {
+#ifdef __ANDROID__
+    extern void xemu_wait_for_vsync(void);
+    xemu_wait_for_vsync();
+#endif
     NV2AState *d = container_of(pg, NV2AState, pgraph);
     PGRAPHVkState *r = pg->vk_renderer_state;
 
