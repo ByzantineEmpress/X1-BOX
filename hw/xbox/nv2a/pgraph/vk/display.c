@@ -19,6 +19,7 @@
 
 #include "renderer.h"
 #include "qemu/error-report.h"
+#include "qemu/main-loop.h"
 #include <EGL/egl.h>
 #include <math.h>
 #ifdef __ANDROID__
@@ -1616,7 +1617,9 @@ static void render_display(PGRAPHState *pg, SurfaceBinding *surface)
     };
 #ifdef __ANDROID__
     extern void xemu_wait_for_vsync(void);
+    bql_unlock();
     xemu_wait_for_vsync();
+    bql_lock();
 #endif
     VK_CHECK(vkQueueSubmit(r->queue, 1, &submit_info, img->fence));
     img->fence_submitted = true;

@@ -2,6 +2,7 @@
 #include <android/log.h>
 #include <mutex>
 #include <condition_variable>
+#include <chrono>
 
 #define LOG_TAG "xemu-choreographer"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
@@ -26,7 +27,14 @@ static void xemu_frame_callback(long frameTimeNanos, void* data) {
 // Called by Vulkan rendering / swapchain loop right before frame submission
 extern "C" void xemu_wait_for_vsync(void) {
     std::unique_lock<std::mutex> lock(vsync_mutex);
-    vsync_cv.wait(lock, []{ return vsync_ready; });
+    
+    // Wait for up to 33ms. If the hardware VSync fails to signal, we drop the lock and render anyway.
+    bool signaled = vsync_cv.wait_for(lock, std::chrono::milliseconds(33), []{ return vsync_ready; });
+    
+    if (!signaled) {
+        LOGI("VSync timeout (33ms)! Force-pushing frame to prevent deadlock.");
+    }
+    
     vsync_ready = false; // Reset for the next frame
 }
 
