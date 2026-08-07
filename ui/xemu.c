@@ -1754,10 +1754,22 @@ void sdl2_gl_refresh(DisplayChangeListener *dcl)
     bql_lock();
     sdl2_poll_events(scon);
 
-    glClearColor(0, 0, 0, 0);
-    glClear(GL_COLOR_BUFFER_BIT);
+    static GLuint s_last_valid_tex = 0;
+    if (tex != 0) {
+        s_last_valid_tex = tex;
+    } else if (s_last_valid_tex != 0) {
+        tex = s_last_valid_tex;
+    }
+
+    if (tex == 0) {
+        glClearColor(0, 0, 0, 0);
+        glClear(GL_COLOR_BUFFER_BIT);
+    }
+
 #ifdef __ANDROID__
-    sdl2_gl_render_texture(scon, tex, flip_required);
+    if (tex != 0) {
+        sdl2_gl_render_texture(scon, tex, flip_required);
+    }
 #endif
     xemu_snapshots_set_framebuffer_texture(tex, flip_required);
     xemu_hud_set_framebuffer_texture(tex, flip_required);

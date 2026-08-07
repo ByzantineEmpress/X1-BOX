@@ -1715,12 +1715,15 @@ void pgraph_vk_render_display(PGRAPHState *pg)
     SurfaceBinding *surface = pgraph_vk_surface_get_within(d, display_addr);
     if (surface == NULL || !surface->color || !surface->width ||
         !surface->height) {
-        static int dbg_no_surf = 0;
-        if (dbg_no_surf < 30) {
-            DBG_LOG("[DISP] no valid surface (surface=%p)", surface);
-            dbg_no_surf++;
+        if (r->frame_skip_last_good_addr && display_addr != r->frame_skip_last_good_addr) {
+            surface = pgraph_vk_surface_get_within(d, r->frame_skip_last_good_addr);
         }
-        return;
+        if (surface == NULL || !surface->color || !surface->width ||
+            !surface->height) {
+            return;
+        }
+    } else {
+        r->frame_skip_last_good_addr = display_addr;
     }
 
     unsigned int width = 0, height = 0;
