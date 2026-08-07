@@ -32,6 +32,7 @@ static bool g_xemu_draw_merge = false;
 static bool g_xemu_bindless_textures = false;
 static bool g_xemu_async_compile = false;
 static bool g_xemu_frame_skip = false;
+static int g_xemu_frame_generation = 0;
 static int g_xemu_submit_frames = 3;
 
 struct OptBisectStats g_opt_stats;
@@ -269,6 +270,16 @@ void xemu_set_frame_skip(bool enable)
 bool xemu_get_frame_skip(void)
 {
     return g_xemu_frame_skip;
+}
+
+void xemu_set_frame_generation(int mode)
+{
+    g_xemu_frame_generation = mode;
+}
+
+int xemu_get_frame_generation(void)
+{
+    return g_xemu_frame_generation;
 }
 
 void xemu_set_submit_frames(int count)

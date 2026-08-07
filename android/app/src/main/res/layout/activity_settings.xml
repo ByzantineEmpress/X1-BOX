@@ -462,6 +462,22 @@
             android:text="@string/settings_frame_skip"
             android:textColor="@color/xemu_text_muted" />
 
+          <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/input_frame_generation"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="@string/settings_frame_generation">
+
+            <AutoCompleteTextView
+              android:id="@+id/dropdown_frame_generation"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:inputType="none" />
+
+          </com.google.android.material.textfield.TextInputLayout>
+
           <com.google.android.material.materialswitch.MaterialSwitch
             android:id="@+id/switch_draw_reorder"
             android:layout_width="match_parent"

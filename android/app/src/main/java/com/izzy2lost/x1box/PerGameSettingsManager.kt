@@ -28,6 +28,7 @@ object PerGameSettingsManager {
     "setting_hard_fpu",
     "setting_skip_boot_anim",
     "frame_skip",
+    "frame_generation",
     "setting_audio_driver",
     "setting_network_enable",
     "draw_reorder",

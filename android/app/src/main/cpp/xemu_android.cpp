@@ -45,6 +45,8 @@ extern "C" void xemu_set_async_compile(bool enable);
 extern "C" bool xemu_get_async_compile(void);
 extern "C" void xemu_set_frame_skip(bool enable);
 extern "C" bool xemu_get_frame_skip(void);
+extern "C" void xemu_set_frame_generation(int mode);
+extern "C" int xemu_get_frame_generation(void);
 extern "C" void xemu_set_submit_frames(int count);
 extern "C" int xemu_get_submit_frames(void);
 extern "C" void xemu_set_tier1_threshold(int value);
@@ -946,6 +948,11 @@ static SetupFiles SyncSetupFiles() {
   __android_log_print(ANDROID_LOG_INFO, "xemu-android",
                       "frame skip: %s", frame_skip ? "ON" : "OFF");
 
+  int frame_gen = GetPrefInt(env, activity, "frame_generation", 0);
+  xemu_set_frame_generation(frame_gen);
+  __android_log_print(ANDROID_LOG_INFO, "xemu-android",
+                      "frame generation: %d", frame_gen);
+
   int submit_frames = GetPrefInt(env, activity, "submit_frames", 2);
   xemu_set_submit_frames(submit_frames);
   __android_log_print(ANDROID_LOG_INFO, "xemu-android",
@@ -1571,6 +1578,18 @@ extern "C" JNIEXPORT void JNICALL
 Java_com_izzy2lost_x1box_SettingsActivity_nativeSetFrameSkip(JNIEnv *, jobject, jboolean enable)
 {
     xemu_set_frame_skip(enable == JNI_TRUE);
+}
+
+extern "C" JNIEXPORT jint JNICALL
+Java_com_izzy2lost_x1box_SettingsActivity_nativeGetFrameGeneration(JNIEnv *, jobject)
+{
+    return static_cast<jint>(xemu_get_frame_generation());
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_izzy2lost_x1box_SettingsActivity_nativeSetFrameGeneration(JNIEnv *, jobject, jint mode)
+{
+    xemu_set_frame_generation(static_cast<int>(mode));
 }
 
 extern "C" JNIEXPORT jint JNICALL

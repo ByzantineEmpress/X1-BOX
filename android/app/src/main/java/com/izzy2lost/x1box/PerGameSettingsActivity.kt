@@ -162,6 +162,17 @@ class PerGameSettingsActivity : AppCompatActivity() {
         options = booleanOptions(),
       ),
       SettingField(
+        key = "frame_generation",
+        inputLayoutId = R.id.input_per_game_frame_generation,
+        dropdownId = R.id.dropdown_per_game_frame_generation,
+        options = listOf(
+          SettingOption(null, R.string.per_game_settings_use_global),
+          SettingOption("0", R.string.settings_frame_gen_off),
+          SettingOption("1", R.string.settings_frame_gen_2x_dup),
+          SettingOption("2", R.string.settings_frame_gen_2x_blend),
+        ),
+      ),
+      SettingField(
         key = "draw_reorder",
         inputLayoutId = R.id.input_per_game_draw_reorder,
         dropdownId = R.id.dropdown_per_game_draw_reorder,
@@ -344,6 +355,7 @@ class PerGameSettingsActivity : AppCompatActivity() {
       "setting_cache_shaders" -> prefs.getBoolean(key, true).toString()
       "setting_skip_boot_anim" -> prefs.getBoolean(key, true).toString()
       "frame_skip" -> prefs.getBoolean(key, false).toString()
+      "frame_generation" -> prefs.getInt(key, 0).toString()
       "setting_hard_fpu" -> prefs.getBoolean(key, true).toString()
       "draw_reorder" -> prefs.getBoolean(key, true).toString()
       "draw_merge" -> prefs.getBoolean(key, true).toString()
