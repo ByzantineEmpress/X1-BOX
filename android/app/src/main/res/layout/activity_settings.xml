@@ -1033,6 +1033,14 @@
           </LinearLayout>
 
           <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_check_updates"
+            style="@style/Widget.Xemu.Button.Outlined.Pill"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/settings_check_updates_action" />
+
+          <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_settings_save"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

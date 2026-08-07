@@ -364,6 +364,10 @@ class SettingsActivity : AppCompatActivity() {
     switchEeprom720p = findViewById(R.id.switch_eeprom_720p)
     switchEeprom1080i = findViewById(R.id.switch_eeprom_1080i)
 
+    findViewById<MaterialButton>(R.id.btn_check_updates)?.setOnClickListener {
+      AppUpdater.checkForUpdates(this, silentIfLatest = false)
+    }
+
     updateEmulatorFilesActionState()
 
     // Load current values

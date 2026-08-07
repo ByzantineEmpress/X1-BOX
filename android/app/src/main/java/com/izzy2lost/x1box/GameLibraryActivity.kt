@@ -173,6 +173,8 @@ class GameLibraryActivity : AppCompatActivity() {
       return
     }
 
+    AppUpdater.checkForUpdates(this, silentIfLatest = true)
+
     loadingSpinner = findViewById(R.id.library_loading)
     convertProgressBar = findViewById(R.id.library_convert_progress)
     loadingText = findViewById(R.id.library_loading_text)

@@ -179,6 +179,7 @@
   <string name="settings_turbo_speed_200">200% (2.0x Turbo)</string>
   <string name="settings_turbo_speed_300">300% (3.0x Max Speed)</string>
   <string name="settings_haptic_rumble">Device Haptic Controller Rumble</string>
+  <string name="settings_check_updates_action">🚀 Check for Updates</string>
   <string name="settings_draw_reorder">Draw Call Reordering</string>
   <string name="settings_draw_merge">Draw Call Merging</string>
   <string name="settings_async_compile">Async Shader Compile</string>
