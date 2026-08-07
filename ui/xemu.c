@@ -1810,8 +1810,13 @@ void sdl2_gl_refresh(DisplayChangeListener *dcl)
     android_log_gl_error("refresh-swap");
 #endif
 
-    // Pure 1:1 Frame Presentation
+    extern bool g_xemu_fxaa;
+
+    // Presentation Pass with optional FXAA post-processing shader
     if (scon->real_window) {
+        if (g_xemu_fxaa && s_curr_tex != 0) {
+            sdl2_gl_render_texture(scon, s_curr_tex, flip_required);
+        }
         SDL_GL_SwapWindow(scon->real_window);
     }
 

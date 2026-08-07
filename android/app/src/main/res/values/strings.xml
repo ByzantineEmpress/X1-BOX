@@ -184,6 +184,13 @@
   <string name="settings_draw_merge">Draw Call Merging</string>
   <string name="settings_async_compile">Async Shader Compile</string>
 
+  <string name="settings_msaa">Hardware MSAA</string>
+  <string name="settings_msaa_off">Off (1x)</string>
+  <string name="settings_msaa_2x">2x MSAA</string>
+  <string name="settings_msaa_4x">4x MSAA</string>
+  <string name="settings_msaa_8x">8x MSAA</string>
+  <string name="settings_fxaa">FXAA Post-Processing</string>
+
   <string name="settings_section_audio">Audio</string>
   <string name="settings_use_dsp">Real-time DSP Processing</string>
   <string name="settings_use_dsp_jit">DSP JIT Engine</string>

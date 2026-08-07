@@ -192,6 +192,9 @@ class SettingsActivity : AppCompatActivity() {
   private lateinit var layoutAdvancedExperimentalContent: LinearLayout
   private lateinit var dropdownUiOrientation: AutoCompleteTextView
   private lateinit var dropdownGameOrientation: AutoCompleteTextView
+  private lateinit var dropdownMsaa: AutoCompleteTextView
+  private lateinit var switchFxaa: MaterialSwitch
+  private var selectedMsaaLevel: Int = 0
   private lateinit var inputEepromLanguage: TextInputLayout
   private lateinit var inputEepromVideoStandard: TextInputLayout
   private lateinit var inputEepromAspectRatio: TextInputLayout
@@ -342,6 +345,8 @@ class SettingsActivity : AppCompatActivity() {
     layoutAdvancedExperimentalContent = findViewById(R.id.layout_advanced_experimental_content)
     dropdownUiOrientation = findViewById(R.id.dropdown_app_orientation)
     dropdownGameOrientation = findViewById(R.id.dropdown_game_orientation)
+    dropdownMsaa = findViewById(R.id.dropdown_msaa)
+    switchFxaa = findViewById(R.id.switch_fxaa)
     driverStatusText      = findViewById(R.id.settings_gpu_driver_status)
     gpuNotSupportedText   = findViewById(R.id.settings_gpu_not_supported)
     btnInstallDriver      = findViewById(R.id.btn_install_driver)
@@ -447,6 +452,24 @@ class SettingsActivity : AppCompatActivity() {
       prefs.getBoolean("frame_skip", false)
     switchCasSharpness.isChecked =
       prefs.getBoolean("setting_cas_sharpness", false)
+    switchFxaa.isChecked =
+      prefs.getBoolean("setting_fxaa", false)
+
+    val msaaOptions = listOf(
+      getString(R.string.settings_msaa_off),
+      getString(R.string.settings_msaa_2x),
+      getString(R.string.settings_msaa_4x),
+      getString(R.string.settings_msaa_8x)
+    )
+    val msaaValues = intArrayOf(0, 2, 4, 8)
+    dropdownMsaa.setAdapter(ArrayAdapter(this, android.R.layout.simple_list_item_1, msaaOptions))
+    val savedMsaa = prefs.getInt("setting_msaa", 0)
+    selectedMsaaLevel = savedMsaa
+    val selectedMsaaIndex = msaaValues.indexOf(savedMsaa).let { if (it >= 0) it else 0 }
+    dropdownMsaa.setText(msaaOptions[selectedMsaaIndex], false)
+    dropdownMsaa.setOnItemClickListener { _, _, position, _ ->
+      selectedMsaaLevel = msaaValues[position]
+    }
 
     switchDrawReorder.isChecked  = prefs.getBoolean("draw_reorder", true)
     switchDrawMerge.isChecked    = prefs.getBoolean("draw_merge", true)
@@ -549,6 +572,8 @@ class SettingsActivity : AppCompatActivity() {
         .putBoolean("setting_skip_boot_anim", switchSkipBootAnim.isChecked)
         .putBoolean("frame_skip", switchFrameSkip.isChecked)
         .putBoolean("setting_cas_sharpness", switchCasSharpness.isChecked)
+        .putInt("setting_msaa", selectedMsaaLevel)
+        .putBoolean("setting_fxaa", switchFxaa.isChecked)
         .putBoolean("draw_reorder", switchDrawReorder.isChecked)
         .putBoolean("draw_merge", switchDrawMerge.isChecked)
         .putBoolean("async_compile", switchAsyncCompile.isChecked)
@@ -560,6 +585,9 @@ class SettingsActivity : AppCompatActivity() {
         .putString("setting_renderer", selectedRenderer)
 
       edit.apply()
+
+      nativeSetMsaa(selectedMsaaLevel)
+      nativeSetFxaa(switchFxaa.isChecked)
       DebugLog.setEnabled(
         context = this@SettingsActivity,
         value = enableDebugLogs,
@@ -2783,4 +2811,7 @@ class SettingsActivity : AppCompatActivity() {
       if (col >= 0 && cursor.moveToFirst()) cursor.getString(col) else null
     }
   }
+
+  private external fun nativeSetMsaa(level: Int)
+  private external fun nativeSetFxaa(enable: Boolean)
 }

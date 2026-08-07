@@ -58,6 +58,9 @@ extern "C" int xemu_get_tier1_threshold(void);
 extern "C" bool runstate_is_running(void);
 extern "C" void xemu_android_pause_emulation(void);
 extern "C" void xemu_android_resume_emulation(void);
+
+bool g_xemu_fxaa = false;
+int g_xemu_msaa = 0;
 extern "C" void xemu_android_request_exit(void);
 extern "C" void xemu_android_set_qemu_thread_finished(bool finished);
 extern "C" void xemu_android_set_display_mode_setting(int mode);
@@ -1674,6 +1677,18 @@ Java_com_izzy2lost_x1box_SettingsActivity_nativeSetFpJit(JNIEnv *, jobject, jboo
         snprintf(path, sizeof(path), "%s/x1box/tb_cache.bin", storage);
         remove(path);
     }
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_izzy2lost_x1box_SettingsActivity_nativeSetFxaa(JNIEnv *, jobject, jboolean enable)
+{
+    g_xemu_fxaa = (enable == JNI_TRUE);
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_izzy2lost_x1box_SettingsActivity_nativeSetMsaa(JNIEnv *, jobject, jint level)
+{
+    g_xemu_msaa = static_cast<int>(level);
 }
 
 /* ---- Real TB Cache JNI Bridge ---- */

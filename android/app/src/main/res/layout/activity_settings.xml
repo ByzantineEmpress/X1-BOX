@@ -183,6 +183,30 @@
 
           </com.google.android.material.button.MaterialButtonToggleGroup>
 
+          <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/input_msaa"
+            style="@style/Widget.Material3.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:hint="@string/settings_msaa">
+
+            <AutoCompleteTextView
+              android:id="@+id/dropdown_msaa"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:inputType="none" />
+
+          </com.google.android.material.textfield.TextInputLayout>
+
+          <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/switch_fxaa"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/settings_fxaa"
+            android:textColor="@color/xemu_text_muted" />
+
           <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
