@@ -33,6 +33,7 @@ static bool g_xemu_bindless_textures = false;
 static bool g_xemu_async_compile = false;
 static bool g_xemu_frame_skip = false;
 static int g_xemu_frame_generation = 0;
+static bool g_xemu_cas_sharpness = false;
 static int g_xemu_submit_frames = 3;
 
 struct OptBisectStats g_opt_stats;
@@ -280,6 +281,16 @@ void xemu_set_frame_generation(int mode)
 int xemu_get_frame_generation(void)
 {
     return g_xemu_frame_generation;
+}
+
+void xemu_set_cas_sharpness(bool enable)
+{
+    g_xemu_cas_sharpness = enable;
+}
+
+bool xemu_get_cas_sharpness(void)
+{
+    return g_xemu_cas_sharpness;
 }
 
 void xemu_set_submit_frames(int count)

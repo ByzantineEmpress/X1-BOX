@@ -173,6 +173,14 @@
               android:layout_weight="1"
               android:text="@string/settings_resolution_scale_3x" />
 
+            <com.google.android.material.button.MaterialButton
+              android:id="@+id/btn_scale_4x"
+              style="?attr/materialButtonOutlinedStyle"
+              android:layout_width="0dp"
+              android:layout_height="wrap_content"
+              android:layout_weight="1"
+              android:text="@string/settings_resolution_scale_4x" />
+
           </com.google.android.material.button.MaterialButtonToggleGroup>
 
           <TextView
@@ -477,6 +485,14 @@
               android:inputType="none" />
 
           </com.google.android.material.textfield.TextInputLayout>
+
+          <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/switch_cas_sharpness"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/settings_cas_sharpness"
+            android:textColor="@color/xemu_text_muted" />
 
           <com.google.android.material.materialswitch.MaterialSwitch
             android:id="@+id/switch_draw_reorder"

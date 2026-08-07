@@ -67,6 +67,8 @@ class PerGameSettingsActivity : AppCompatActivity() {
           SettingOption(null, R.string.per_game_settings_use_global),
           SettingOption("linear", R.string.settings_filtering_linear),
           SettingOption("nearest", R.string.settings_filtering_nearest),
+          SettingOption("trilinear", R.string.settings_filtering_trilinear),
+          SettingOption("aniso16x", R.string.settings_filtering_aniso16x),
         ),
       ),
       SettingField(
@@ -84,6 +86,7 @@ class PerGameSettingsActivity : AppCompatActivity() {
           SettingOption("1", R.string.settings_resolution_scale_1x),
           SettingOption("2", R.string.settings_resolution_scale_2x),
           SettingOption("3", R.string.settings_resolution_scale_3x),
+          SettingOption("4", R.string.settings_resolution_scale_4x),
         ),
       ),
       SettingField(
@@ -159,6 +162,12 @@ class PerGameSettingsActivity : AppCompatActivity() {
         key = "frame_skip",
         inputLayoutId = R.id.input_per_game_frame_skip,
         dropdownId = R.id.dropdown_per_game_frame_skip,
+        options = booleanOptions(),
+      ),
+      SettingField(
+        key = "setting_cas_sharpness",
+        inputLayoutId = R.id.input_per_game_cas_sharpness,
+        dropdownId = R.id.dropdown_per_game_cas_sharpness,
         options = booleanOptions(),
       ),
       SettingField(
@@ -355,6 +364,7 @@ class PerGameSettingsActivity : AppCompatActivity() {
       "setting_cache_shaders" -> prefs.getBoolean(key, true).toString()
       "setting_skip_boot_anim" -> prefs.getBoolean(key, true).toString()
       "frame_skip" -> prefs.getBoolean(key, false).toString()
+      "setting_cas_sharpness" -> prefs.getBoolean(key, false).toString()
       "frame_generation" -> prefs.getInt(key, 0).toString()
       "setting_hard_fpu" -> prefs.getBoolean(key, true).toString()
       "draw_reorder" -> prefs.getBoolean(key, true).toString()

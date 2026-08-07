@@ -47,6 +47,8 @@ extern "C" void xemu_set_frame_skip(bool enable);
 extern "C" bool xemu_get_frame_skip(void);
 extern "C" void xemu_set_frame_generation(int mode);
 extern "C" int xemu_get_frame_generation(void);
+extern "C" void xemu_set_cas_sharpness(bool enable);
+extern "C" bool xemu_get_cas_sharpness(void);
 extern "C" void xemu_set_submit_frames(int count);
 extern "C" int xemu_get_submit_frames(void);
 extern "C" void xemu_set_tier1_threshold(int value);
@@ -952,6 +954,11 @@ static SetupFiles SyncSetupFiles() {
   xemu_set_frame_generation(frame_gen);
   __android_log_print(ANDROID_LOG_INFO, "xemu-android",
                       "frame generation: %d", frame_gen);
+
+  bool cas_sharpness = GetPrefBool(env, activity, "setting_cas_sharpness", false);
+  xemu_set_cas_sharpness(cas_sharpness);
+  __android_log_print(ANDROID_LOG_INFO, "xemu-android",
+                      "cas sharpness: %s", cas_sharpness ? "ON" : "OFF");
 
   int submit_frames = GetPrefInt(env, activity, "submit_frames", 2);
   xemu_set_submit_frames(submit_frames);

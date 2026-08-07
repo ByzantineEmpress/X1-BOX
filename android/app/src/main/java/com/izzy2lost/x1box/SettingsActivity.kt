@@ -318,6 +318,7 @@ class SettingsActivity : AppCompatActivity() {
     val switchVsync       = findViewById<MaterialSwitch>(R.id.switch_vsync)
     val switchSkipBootAnim = findViewById<MaterialSwitch>(R.id.switch_skip_boot_anim)
     val switchFrameSkip = findViewById<MaterialSwitch>(R.id.switch_frame_skip)
+    val switchCasSharpness = findViewById<MaterialSwitch>(R.id.switch_cas_sharpness)
     val switchDrawReorder  = findViewById<MaterialSwitch>(R.id.switch_draw_reorder)
     val switchDrawMerge    = findViewById<MaterialSwitch>(R.id.switch_draw_merge)
     val switchAsyncCompile = findViewById<MaterialSwitch>(R.id.switch_async_compile)
@@ -384,6 +385,7 @@ class SettingsActivity : AppCompatActivity() {
     when (scale) {
       2    -> toggleScale.check(R.id.btn_scale_2x)
       3    -> toggleScale.check(R.id.btn_scale_3x)
+      4    -> toggleScale.check(R.id.btn_scale_4x)
       else -> toggleScale.check(R.id.btn_scale_1x)
     }
 
@@ -441,6 +443,8 @@ class SettingsActivity : AppCompatActivity() {
       prefs.getBoolean("setting_skip_boot_anim", true)
     switchFrameSkip.isChecked =
       prefs.getBoolean("frame_skip", false)
+    switchCasSharpness.isChecked =
+      prefs.getBoolean("setting_cas_sharpness", false)
 
     val frameGenOptions = listOf(
       getString(R.string.settings_frame_gen_off),
@@ -509,6 +513,7 @@ class SettingsActivity : AppCompatActivity() {
       val selectedScale = when (toggleScale.checkedButtonId) {
         R.id.btn_scale_2x -> 2
         R.id.btn_scale_3x -> 3
+        R.id.btn_scale_4x -> 4
         else              -> 1
       }
       val selectedThread = when (toggleThread.checkedButtonId) {
@@ -551,6 +556,7 @@ class SettingsActivity : AppCompatActivity() {
         .putBoolean("setting_vsync", switchVsync.isChecked)
         .putBoolean("setting_skip_boot_anim", switchSkipBootAnim.isChecked)
         .putBoolean("frame_skip", switchFrameSkip.isChecked)
+        .putBoolean("setting_cas_sharpness", switchCasSharpness.isChecked)
         .putInt("frame_generation", selectedFrameGeneration)
         .putBoolean("draw_reorder", switchDrawReorder.isChecked)
         .putBoolean("draw_merge", switchDrawMerge.isChecked)

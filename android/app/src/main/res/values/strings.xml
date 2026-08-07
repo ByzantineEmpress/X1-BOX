@@ -108,8 +108,6 @@
   <string name="settings_graphics_api_vulkan">Vulkan</string>
   <string name="settings_graphics_api_opengl">OpenGL ES</string>
   <string name="settings_filtering">Display Filtering</string>
-  <string name="settings_filtering_linear">Linear</string>
-  <string name="settings_filtering_nearest">Nearest</string>
   <string name="settings_vsync">VSync</string>
   <string name="frontend_launch_setup_required">Finish core setup before launching from a frontend.</string>
   <string name="frontend_launch_unresolved">Could not access that game from the frontend intent. Pick the same folder in x1box first, or use a content URI.</string>
@@ -147,9 +145,14 @@
   <string name="settings_system_memory_128">128 MiB (Debug/Homebrew)</string>
   <string name="settings_system_memory_hint">Use 64 MiB for retail games. 128 MiB is mainly for debug/homebrew and may reduce compatibility.</string>
   <string name="settings_resolution_scale">Internal Resolution Scale</string>
-  <string name="settings_resolution_scale_1x">1x (Native 480p)</string>
+  <string name="settings_resolution_scale_1x">1x (480p)</string>
   <string name="settings_resolution_scale_2x">2x (960p)</string>
   <string name="settings_resolution_scale_3x">3x (1440p)</string>
+  <string name="settings_resolution_scale_4x">4x (4K 2160p)</string>
+  <string name="settings_filtering_linear">Linear</string>
+  <string name="settings_filtering_nearest">Nearest</string>
+  <string name="settings_filtering_trilinear">Trilinear</string>
+  <string name="settings_filtering_aniso16x">Anisotropy 16x</string>
 
   <string name="settings_section_performance">Performance</string>
   <string name="settings_tcg_thread">CPU Threading Mode</string>
@@ -163,6 +166,7 @@
   <string name="settings_frame_gen_off">Disabled</string>
   <string name="settings_frame_gen_2x_dup">2x Frame Duplication</string>
   <string name="settings_frame_gen_2x_blend">2x Motion Blending (Smooth)</string>
+  <string name="settings_cas_sharpness">CAS Sharpening Filter (Upscaler)</string>
   <string name="settings_draw_reorder">Draw Call Reordering</string>
   <string name="settings_draw_merge">Draw Call Merging</string>
   <string name="settings_async_compile">Async Shader Compile</string>
