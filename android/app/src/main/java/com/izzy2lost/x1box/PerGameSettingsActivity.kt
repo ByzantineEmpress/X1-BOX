@@ -156,6 +156,12 @@ class PerGameSettingsActivity : AppCompatActivity() {
         options = booleanOptions(),
       ),
       SettingField(
+        key = "frame_skip",
+        inputLayoutId = R.id.input_per_game_frame_skip,
+        dropdownId = R.id.dropdown_per_game_frame_skip,
+        options = booleanOptions(),
+      ),
+      SettingField(
         key = "draw_reorder",
         inputLayoutId = R.id.input_per_game_draw_reorder,
         dropdownId = R.id.dropdown_per_game_draw_reorder,
@@ -307,8 +313,9 @@ class PerGameSettingsActivity : AppCompatActivity() {
       "setting_use_dsp_jit" -> prefs.getBoolean(key, true).toString()
       "setting_hrtf" -> prefs.getBoolean(key, false).toString()
       "setting_cache_shaders" -> prefs.getBoolean(key, true).toString()
-      "setting_hard_fpu" -> prefs.getBoolean(key, true).toString()
       "setting_skip_boot_anim" -> prefs.getBoolean(key, true).toString()
+      "frame_skip" -> prefs.getBoolean(key, false).toString()
+      "setting_hard_fpu" -> prefs.getBoolean(key, true).toString()
       "draw_reorder" -> prefs.getBoolean(key, true).toString()
       "draw_merge" -> prefs.getBoolean(key, true).toString()
       "async_compile" -> prefs.getBoolean(key, false).toString()

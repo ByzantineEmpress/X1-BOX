@@ -455,6 +455,14 @@
             android:textColor="@color/xemu_text_muted" />
 
           <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/switch_frame_skip"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/settings_frame_skip"
+            android:textColor="@color/xemu_text_muted" />
+
+          <com.google.android.material.materialswitch.MaterialSwitch
             android:id="@+id/switch_draw_reorder"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

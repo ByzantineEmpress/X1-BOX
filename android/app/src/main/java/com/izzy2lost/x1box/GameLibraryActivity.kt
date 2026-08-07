@@ -130,10 +130,6 @@ class GameLibraryActivity : AppCompatActivity() {
   private lateinit var btnViewList: MaterialButton
   private lateinit var btnViewGrid: MaterialButton
 
-  private lateinit var btnCompileAot: MaterialButton
-
-  private external fun nativeGetTbCacheStats(): String
-  private external fun nativeFlushTbCache()
 
   private var gamesFolderUri: Uri? = null
   private var scanGeneration = 0
@@ -164,35 +160,7 @@ class GameLibraryActivity : AppCompatActivity() {
       }
     }
 
-  private fun showTbCacheDialog() {
-    val stats = try { nativeGetTbCacheStats() } catch (e: Throwable) {
-      "TB Cache not available (emulator not running)"
-    }
 
-    val view = layoutInflater.inflate(R.layout.dialog_aot_progress, null)
-    val titleView = view.findViewById<TextView>(R.id.aot_progress_title)
-    val progressBar = view.findViewById<ProgressBar>(R.id.aot_progress_bar)
-    val percentView = view.findViewById<TextView>(R.id.aot_progress_percent)
-    val logView = view.findViewById<TextView>(R.id.aot_progress_log)
-
-    titleView.text = "Translation Block Cache"
-    progressBar.visibility = View.GONE
-    percentView.visibility = View.GONE
-    logView.text = stats + "\n\nThe TB cache records which code blocks\nare compiled during gameplay and\npre-translates them on the next launch\nto eliminate JIT stutter."
-
-    MaterialAlertDialogBuilder(this)
-      .setView(view)
-      .setPositiveButton("Save Cache Now") { _, _ ->
-        try {
-          nativeFlushTbCache()
-          Toast.makeText(this, "TB cache saved!", Toast.LENGTH_SHORT).show()
-        } catch (e: Throwable) {
-          Toast.makeText(this, "Failed to save: ${e.message}", Toast.LENGTH_SHORT).show()
-        }
-      }
-      .setNegativeButton(android.R.string.cancel, null)
-      .show()
-  }
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -214,7 +182,7 @@ class GameLibraryActivity : AppCompatActivity() {
     btnBootDashboard = findViewById(R.id.btn_boot_dashboard)
     btnSettings = findViewById(R.id.btn_settings)
     btnSnapshots = findViewById(R.id.btn_snapshots)
-    btnCompileAot = findViewById(R.id.btn_compile_aot)
+
     btnConvertIso = findViewById(R.id.btn_convert_iso)
     btnAbout = findViewById(R.id.btn_library_about)
     btnViewList = findViewById(R.id.btn_view_list)
@@ -242,9 +210,7 @@ class GameLibraryActivity : AppCompatActivity() {
     btnSnapshots.setOnClickListener {
       showSnapshotStartupPicker()
     }
-    btnCompileAot.setOnClickListener {
-      showTbCacheDialog()
-    }
+
     btnConvertIso.setOnClickListener {
       showIsoConversionPicker()
     }

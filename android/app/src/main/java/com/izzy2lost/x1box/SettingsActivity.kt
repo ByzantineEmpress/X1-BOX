@@ -315,6 +315,7 @@ class SettingsActivity : AppCompatActivity() {
     val switchFpu         = findViewById<MaterialSwitch>(R.id.switch_hard_fpu)
     val switchVsync       = findViewById<MaterialSwitch>(R.id.switch_vsync)
     val switchSkipBootAnim = findViewById<MaterialSwitch>(R.id.switch_skip_boot_anim)
+    val switchFrameSkip = findViewById<MaterialSwitch>(R.id.switch_frame_skip)
     val switchDrawReorder  = findViewById<MaterialSwitch>(R.id.switch_draw_reorder)
     val switchDrawMerge    = findViewById<MaterialSwitch>(R.id.switch_draw_merge)
     val switchAsyncCompile = findViewById<MaterialSwitch>(R.id.switch_async_compile)
@@ -435,6 +436,8 @@ class SettingsActivity : AppCompatActivity() {
     switchVsync.isChecked   = prefs.getBoolean("setting_vsync", false)
     switchSkipBootAnim.isChecked =
       prefs.getBoolean("setting_skip_boot_anim", true)
+    switchFrameSkip.isChecked =
+      prefs.getBoolean("frame_skip", false)
     switchDrawReorder.isChecked  = prefs.getBoolean("draw_reorder", true)
     switchDrawMerge.isChecked    = prefs.getBoolean("draw_merge", true)
     switchAsyncCompile.isChecked = prefs.getBoolean("async_compile", false)
@@ -532,6 +535,7 @@ class SettingsActivity : AppCompatActivity() {
         .putBoolean("setting_hard_fpu", switchFpu.isChecked)
         .putBoolean("setting_vsync", switchVsync.isChecked)
         .putBoolean("setting_skip_boot_anim", switchSkipBootAnim.isChecked)
+        .putBoolean("frame_skip", switchFrameSkip.isChecked)
         .putBoolean("draw_reorder", switchDrawReorder.isChecked)
         .putBoolean("draw_merge", switchDrawMerge.isChecked)
         .putBoolean("async_compile", switchAsyncCompile.isChecked)
@@ -625,6 +629,7 @@ class SettingsActivity : AppCompatActivity() {
     val editor = prefs.edit()
 
     if (!prefs.contains("setting_skip_boot_anim")) editor.putBoolean("setting_skip_boot_anim", true)
+    if (!prefs.contains("frame_skip")) editor.putBoolean("frame_skip", false)
     if (!prefs.contains("draw_reorder")) editor.putBoolean("draw_reorder", true)
     if (!prefs.contains("draw_merge")) editor.putBoolean("draw_merge", true)
     if (!prefs.contains("async_compile")) editor.putBoolean("async_compile", false)
@@ -1114,6 +1119,8 @@ class SettingsActivity : AppCompatActivity() {
 
     parseTomlBoolean(sections, "general", "skip_boot_anim")
       ?.let { editor.putBoolean("setting_skip_boot_anim", it) }
+    parseTomlBoolean(sections, "general", "frame_skip")
+      ?.let { editor.putBoolean("frame_skip", it) }
     parseTomlString(sections, "display", "renderer")
       ?.lowercase(Locale.US)
       ?.takeIf { it == "opengl" || it == "vulkan" }

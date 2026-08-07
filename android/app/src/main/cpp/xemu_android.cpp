@@ -1617,48 +1617,6 @@ Java_com_izzy2lost_x1box_SettingsActivity_nativeSetFpJit(JNIEnv *, jobject, jboo
 
 /* ---- Real TB Cache JNI Bridge ---- */
 
-extern "C" JNIEXPORT jstring JNICALL
-Java_com_izzy2lost_x1box_GameLibraryActivity_nativeGetTbCacheStats(JNIEnv* env, jobject) {
-#if XEMU_OPT_TB_CACHE_HINTS
-    extern uint64_t tb_cache_stats_lookup_hits;
-    extern uint64_t tb_cache_stats_lookup_misses;
-    char buf[512];
-    uint64_t total = tb_cache_stats_lookup_hits + tb_cache_stats_lookup_misses;
-    double hit_rate = total > 0 ? (double)tb_cache_stats_lookup_hits / total * 100.0 : 0.0;
-    snprintf(buf, sizeof(buf),
-             "TB Cache Statistics:\n"
-             "  Lookup hits:   %llu\n"
-             "  Lookup misses: %llu\n"
-             "  Hit rate:      %.1f%%\n"
-             "  Total lookups: %llu",
-             (unsigned long long)tb_cache_stats_lookup_hits,
-             (unsigned long long)tb_cache_stats_lookup_misses,
-             hit_rate,
-             (unsigned long long)total);
-    return env->NewStringUTF(buf);
-#else
-    return env->NewStringUTF("TB Cache hints not enabled in this build.");
-#endif
-}
-
-extern "C" JNIEXPORT void JNICALL
-Java_com_izzy2lost_x1box_GameLibraryActivity_nativeFlushTbCache(JNIEnv*, jobject) {
-#if XEMU_OPT_TB_CACHE_HINTS
-    const char *storage = SDL_AndroidGetInternalStoragePath();
-    if (storage) {
-        char dir_path[PATH_MAX];
-        snprintf(dir_path, sizeof(dir_path), "%s/x1box", storage);
-        mkdir(dir_path, 0755);
-        char cache_path[PATH_MAX];
-        snprintf(cache_path, sizeof(cache_path), "%s/tb_cache.bin", dir_path);
-        extern uint32_t tb_cache_compute_game_hash(const char*, const char*);
-        uint32_t game_hash = tb_cache_compute_game_hash(
-            g_config.sys.files.bootrom_path, g_config.sys.files.flashrom_path);
-        game_hash ^= (xemu_get_fp_safe() ? 0x1u : 0) | (xemu_get_fp_jit() ? 0x2u : 0);
-        tb_cache_save(cache_path, game_hash);
-    }
-#endif
-}
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_izzy2lost_x1box_MainActivity_nativePauseEmulation(JNIEnv *, jobject)

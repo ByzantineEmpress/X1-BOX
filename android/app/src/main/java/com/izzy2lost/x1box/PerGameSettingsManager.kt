@@ -27,6 +27,7 @@ object PerGameSettingsManager {
     "setting_cache_shaders",
     "setting_hard_fpu",
     "setting_skip_boot_anim",
+    "frame_skip",
     "setting_audio_driver",
     "setting_network_enable",
     "draw_reorder",
