@@ -219,6 +219,9 @@ class GameLibraryActivity : AppCompatActivity() {
     btnAbout.setOnClickListener {
       showAboutDialog()
     }
+    findViewById<ImageButton>(R.id.btn_library_check_updates)?.setOnClickListener {
+      AppUpdater.checkForUpdates(this, silentIfLatest = false)
+    }
     btnViewList.setOnClickListener { setDisplayMode(false) }
     btnViewGrid.setOnClickListener { setDisplayMode(true) }
     updateConvertButtonState()

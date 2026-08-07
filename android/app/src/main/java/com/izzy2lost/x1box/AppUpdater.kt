@@ -93,6 +93,27 @@ object AppUpdater {
     }
   }
 
+  private fun parseVersionComponents(version: String): IntArray {
+    val clean = version.trim().removePrefix("v").removePrefix("V").split("-")[0]
+    val parts = clean.split(".")
+    val numbers = IntArray(3)
+    for (i in 0 until minOf(3, parts.size)) {
+      numbers[i] = parts[i].toIntOrNull() ?: 0
+    }
+    return numbers
+  }
+
+  fun isNewerVersion(remoteTag: String, localVersion: String): Boolean {
+    val remote = parseVersionComponents(remoteTag)
+    val local = parseVersionComponents(localVersion)
+
+    for (i in 0 until 3) {
+      if (remote[i] > local[i]) return true
+      if (remote[i] < local[i]) return false
+    }
+    return false
+  }
+
   private fun promptUpdateIfNewer(activity: Activity, release: ReleaseInfo, silentIfLatest: Boolean) {
     if (activity.isFinishing || activity.isDestroyed) return
 
@@ -102,7 +123,7 @@ object AppUpdater {
       "0.0.0"
     }
 
-    if (release.tagName == currentVersion || currentVersion.startsWith(release.tagName)) {
+    if (!isNewerVersion(release.tagName, currentVersion)) {
       if (!silentIfLatest) {
         Toast.makeText(activity, "X1-BOX is up to date ($currentVersion)", Toast.LENGTH_SHORT).show()
       }
