@@ -229,6 +229,7 @@ if(XEMU_ENABLE_VULKAN)
 endif()
 
 # --- GLib (for QEMU core) ---
+# Try to find meson via environment or PATH
 find_program(MESON_EXECUTABLE meson)
 find_program(NINJA_EXECUTABLE ninja)
 

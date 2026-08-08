@@ -50,7 +50,7 @@ android {
           "-DCMAKE_CXX_FLAGS_RELWITHDEBINFO=-O2 -g0 -fvisibility=hidden",
           "-DCMAKE_C_FLAGS_RELEASE=-O2 -g0 -fvisibility=hidden",
           "-DCMAKE_CXX_FLAGS_RELEASE=-O2 -g0 -fvisibility=hidden",
-          "-DMESON_EXECUTABLE=C:/Users/Kyra/AppData/Roaming/Python/Python314/Scripts/meson.exe",
+          "-DMESON_EXECUTABLE=${env('MESON_EXECUTABLE', 'python3')}",
         )
         cppFlags += listOf("-std=c++17", "-fexceptions", "-frtti")
       }
