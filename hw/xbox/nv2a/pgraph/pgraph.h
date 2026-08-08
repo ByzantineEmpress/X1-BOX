@@ -180,8 +180,6 @@ typedef struct PGRAPHState {
 
     uint32_t primitive_mode;
 
-    bool enable_vertex_program_write; // FIXME: Not used anywhere???
-
     uint32_t vertex_state_shader_v0[4];
     uint32_t program_data[NV2A_MAX_TRANSFORM_PROGRAM_LENGTH][VSH_TOKEN_SIZE];
     bool program_data_dirty;
