@@ -44,12 +44,13 @@ android {
           "-DXEMU_ENABLE_XISO_CONVERTER=ON",
           "-DXEMU_OPT_NATIVE_FLOAT=ON",
           "-DXEMU_OPT_TCG_PEEPHOLE=ON",
+          "-DXEMU_ENABLE_LTO=ON",
           "-DCMAKE_C_FLAGS_DEBUG=-O2 -g0",
           "-DCMAKE_CXX_FLAGS_DEBUG=-O2 -g0",
           "-DCMAKE_C_FLAGS_RELWITHDEBINFO=-O2 -g0 -fvisibility=hidden",
           "-DCMAKE_CXX_FLAGS_RELWITHDEBINFO=-O2 -g0 -fvisibility=hidden",
-          "-DCMAKE_C_FLAGS_RELEASE=-O2 -g0 -fvisibility=hidden",
-          "-DCMAKE_CXX_FLAGS_RELEASE=-O2 -g0 -fvisibility=hidden",
+          "-DCMAKE_C_FLAGS_RELEASE=-O3 -ffast-math -fvisibility=hidden",
+          "-DCMAKE_CXX_FLAGS_RELEASE=-O3 -ffast-math -fvisibility=hidden",
           "-DMESON_EXECUTABLE=${env('MESON_EXECUTABLE', 'python3')}",
         )
         cppFlags += listOf("-std=c++17", "-fexceptions", "-frtti")
