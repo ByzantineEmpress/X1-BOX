@@ -49,8 +49,8 @@ android {
           "-DCMAKE_CXX_FLAGS_DEBUG=-O2 -g0",
           "-DCMAKE_C_FLAGS_RELWITHDEBINFO=-O2 -g0 -fvisibility=hidden",
           "-DCMAKE_CXX_FLAGS_RELWITHDEBINFO=-O2 -g0 -fvisibility=hidden",
-          "-DCMAKE_C_FLAGS_RELEASE=-O3 -ffast-math -fvisibility=hidden",
-          "-DCMAKE_CXX_FLAGS_RELEASE=-O3 -ffast-math -fvisibility=hidden",
+          "-DCMAKE_C_FLAGS_RELEASE=-O3 -fvisibility=hidden",
+          "-DCMAKE_CXX_FLAGS_RELEASE=-O3 -fvisibility=hidden",
           "-DMESON_EXECUTABLE=${env('MESON_EXECUTABLE', 'python3')}",
         )
         cppFlags += listOf("-std=c++17", "-fexceptions", "-frtti")
