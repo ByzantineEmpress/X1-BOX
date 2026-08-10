@@ -586,6 +586,7 @@ class SettingsActivity : AppCompatActivity() {
 
       edit.apply()
 
+      nativeSetSurfaceScale(selectedScale)
       nativeSetMsaa(selectedMsaaLevel)
       nativeSetFxaa(switchFxaa.isChecked)
       DebugLog.setEnabled(
@@ -2814,4 +2815,5 @@ class SettingsActivity : AppCompatActivity() {
 
   private external fun nativeSetMsaa(level: Int)
   private external fun nativeSetFxaa(enable: Boolean)
+  private external fun nativeSetSurfaceScale(scale: Int)
 }

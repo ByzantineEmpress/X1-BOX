@@ -139,8 +139,6 @@ static enum S3TC_DECOMPRESS_FORMAT kelvin_format_to_s3tc_format(int color_format
     }
 }
 
-<<<<<<< HEAD
-=======
 /* Returns the native Vulkan BC format for a DXT texture, or 0 if the format
  * is not a compressed DXT texture. Only call when BC support is available. */
 static VkFormat kelvin_format_to_native_bc(int color_format)
@@ -156,8 +154,6 @@ static VkFormat kelvin_format_to_native_bc(int color_format)
         return (VkFormat)0;
     }
 }
-
->>>>>>> 21e61a4e01 (nv2a: fix BC3 corruption by disabling native BC for 3D textures)
 // FIXME: Move to common
 static void memcpy_image(void *dst, void *src, int min_stride, int dst_stride, int src_stride, int height)
 {
@@ -215,6 +211,7 @@ static size_t get_cubemap_layer_size(PGRAPHState *pg, TextureShape s)
 static TextureLayout *get_texture_layout(PGRAPHState *pg, int texture_idx)
 {
     NV2AState *d = container_of(pg, NV2AState, pgraph);
+    PGRAPHVkState *r = pg->vk_renderer_state;
     TextureShape s = pgraph_get_texture_shape(pg, texture_idx);
     BasicColorFormatInfo f = kelvin_color_format_info_map[s.color_format];
 
@@ -320,23 +317,27 @@ static TextureLayout *get_texture_layout(PGRAPHState *pg, int texture_idx)
                     unsigned int tex_width = width, tex_height = height;
                     unsigned int physical_width = (width + 3) & ~3,
                                  physical_height = (height + 3) & ~3;
+                    size_t compressed_size =
+                        (size_t)(physical_width / 4) * (physical_height / 4) * block_size;
 
-<<<<<<< HEAD
-                    size_t converted_size = width * height * 4;
-                    uint8_t *converted = s3tc_decompress_2d(
-                        kelvin_format_to_s3tc_format(s.color_format),
-                        texture_data_ptr, width, height);
-                    assert(converted);
-=======
-                    VkFormat _bc_fmt = r->texture_compression_bc_supported
+                    size_t converted_size;
+                    uint8_t *converted;
+                    VkFormat _bc_fmt = (r->texture_compression_bc_supported && s.dimensionality != 3)
                         ? kelvin_format_to_native_bc(s.color_format) : (VkFormat)0;
                     if (_bc_fmt) {
                         /* Native BC path: upload compressed blocks directly.
                          * DXT blocks are already in linear order (L_ prefix).
                          * No decompression needed. */
-                        uint8_t *raw_copy = g_malloc(compressed_size);
-                        memcpy(raw_copy, texture_data_ptr, compressed_size);
->>>>>>> 21e61a4e01 (nv2a: fix BC3 corruption by disabling native BC for 3D textures)
+                        converted_size = compressed_size;
+                        converted = g_malloc(compressed_size);
+                        memcpy(converted, texture_data_ptr, compressed_size);
+                    } else {
+                        converted_size = width * height * 4;
+                        converted = s3tc_decompress_2d(
+                            kelvin_format_to_s3tc_format(s.color_format),
+                            texture_data_ptr, width, height);
+                        assert(converted);
+                    }
 
                     if (s.cubemap && adjusted_width != s.width) {
                         // FIXME: Consider preserving the border.
@@ -580,7 +581,7 @@ static void upload_texture_image(PGRAPHState *pg, int texture_idx,
     /* Override format for native BC upload.
      * Skip for 3D textures — Vulkan doesn't guarantee BC for VK_IMAGE_TYPE_3D. */
     VkFormat native_bc = (r->texture_compression_bc_supported &&
-                          state->dimensionality != 3)
+                          binding->key.state.dimensionality != 3)
                          ? kelvin_format_to_native_bc(state->color_format)
                          : (VkFormat)0;
     if (native_bc) {
@@ -1487,7 +1488,7 @@ static void create_texture(PGRAPHState *pg, int texture_idx)
      * cached image cannot be reused — treat it as a miss. */
     VkFormat expected_fmt = kelvin_color_format_vk_map[state.color_format].vk_format;
     if (!surface_to_texture && r->texture_compression_bc_supported &&
-        state.dimensionality != 3) {
+        pgraph_get_texture_shape(pg, texture_idx).dimensionality != 3) {
         VkFormat bc = kelvin_format_to_native_bc(state.color_format);
         if (bc) expected_fmt = bc;
     }
@@ -1638,7 +1639,7 @@ static void create_texture(PGRAPHState *pg, int texture_idx)
     bool has_replacement = false;
     VkFormat native_bc = (!surface_to_texture && !has_replacement &&
                           r->texture_compression_bc_supported &&
-                          state.dimensionality != 3)
+                          pgraph_get_texture_shape(pg, texture_idx).dimensionality != 3)
                          ? kelvin_format_to_native_bc(state.color_format)
                          : (VkFormat)0;
     if (native_bc) {
@@ -2339,6 +2340,10 @@ void pgraph_vk_init_textures(PGRAPHState *pg)
             r->physical_device, kelvin_color_format_vk_map[i].vk_format,
             &r->texture_format_properties[i]);
     }
+
+    VkFormatProperties bc1_props;
+    vkGetPhysicalDeviceFormatProperties(r->physical_device, VK_FORMAT_BC1_RGBA_UNORM_BLOCK, &bc1_props);
+    r->texture_compression_bc_supported = (bc1_props.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT) != 0;
 }
 
 void pgraph_vk_finalize_textures(PGRAPHState *pg)

@@ -175,33 +175,11 @@ bool pgraph_vk_download_surfaces_in_range_if_dirty(PGRAPHState *pg,
      * (unsubmitted) aux CB. */
     if (r->num_deferred_downloads > 0 && r->deferred_downloads_frame >= 0) {
         OPT_STAT_INC(sd_complete_def_coalesced);
-        pgraph_lock(d);
         VK_CHECK(vkWaitForFences(r->device, 1,
                                  &r->frame_fences[r->deferred_downloads_frame],
                                  VK_TRUE, UINT64_MAX));
-        pgraph_unlock(d);
         pgraph_vk_complete_staged_downloads(d, r);
-        if (r->is_ds) {
-            if (partial_row) {
-                size_t scaled_dl_row_start = dl_row_start;
-                size_t scaled_dl_row_count = dl_row_count;
-                // Rescale partial region to match scaled surface size
-                if (r->surface_scale_factor != 1.0) {
-                    scaled_dl_row_start = (size_t)(dl_row_start * r->surface_scale_factor);
-                    scaled_dl_row_count = (size_t)(dl_row_count * r->surface_scale_factor);
-                    if (scaled_dl_row_start + scaled_dl_row_count > surface->scaled_height) {
-                        scaled_dl_row_start = surface->scaled_height - scaled_dl_row_count;
-                    }
-                }
-                pgraph_download_surface_partial(r, surface, scaled_dl_row_start, scaled_dl_row_count);
-            } else {
-                pgraph_download_surface_complete_deferred(r);
-            }
-        } else {
-            pgraph_download_surface_complete_deferred(r);
-        }
     }
-
     QTAILQ_FOREACH(surface, &r->surfaces, entry) {
         if (check_surface_overlaps_range(surface, start, size)) {
             found_overlap = true;
@@ -251,7 +229,7 @@ static bool download_surface_record_deferred(NV2AState *d,
 
     if (r->num_deferred_downloads >= MAX_DEFERRED_DOWNLOADS) {
         /* Flush prior batch instead of silent-drop */
-        pgraph_vk_download_surface_complete_deferred(r);
+        pgraph_vk_download_surface_complete_deferred(d);
         return false;
     }
 

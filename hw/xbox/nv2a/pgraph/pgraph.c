@@ -4061,7 +4061,7 @@ DEF_METHOD(NV097, SET_TRANSFORM_EXECUTION_MODE)
 
 DEF_METHOD(NV097, SET_TRANSFORM_PROGRAM_CXT_WRITE_EN)
 {
-    pg->enable_vertex_program_write = parameter;
+    // pg->enable_vertex_program_write = parameter;
 }
 
 DEF_METHOD(NV097, SET_TRANSFORM_PROGRAM_LOAD)

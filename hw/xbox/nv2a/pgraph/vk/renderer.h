@@ -1315,6 +1315,7 @@ typedef struct PGRAPHVkState {
     void *pending_post_fence_opaque;
 
     RenderThread render_thread;
+    bool texture_compression_bc_supported;
 } PGRAPHVkState;
 
 static inline StorageBuffer *get_staging_buffer(PGRAPHVkState *r, int buffer_id)

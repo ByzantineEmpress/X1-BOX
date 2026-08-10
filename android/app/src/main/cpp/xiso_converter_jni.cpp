@@ -17,7 +17,12 @@ extern "C" int xiso_convert_iso_to_xiso_with_progress(
     char *err_buf,
     size_t err_buf_len,
     void (*progress_callback)(int current, int total, void *user_data),
-    void *user_data);
+    void *user_data)
+{
+    // C implementation (extract-xiso) does not currently wire up progress callbacks
+    // for rewriting. Fall back to the non-progress version.
+    return xiso_convert_iso_to_xiso(input_path, output_path, err_buf, err_buf_len);
+}
 
 struct JniProgressContext {
     JNIEnv *env;

@@ -1452,12 +1452,6 @@ void pgraph_vk_init_shaders(PGRAPHState *pg)
     create_push_descriptor_resources(pg);
 #if OPT_ASYNC_COMPILE
     pgraph_vk_compile_worker_init(r);
-#ifdef __ANDROID__
-    {
-        extern void install_shader_warmup_progress_callback(void);
-        install_shader_warmup_progress_callback();
-    }
-#endif
 #endif
     shader_cache_init(pg);
 

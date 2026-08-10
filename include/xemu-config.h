@@ -211,6 +211,8 @@ struct config {
         } vulkan;
         struct {
             int surface_scale;
+            int msaa;
+            bool fxaa;
         } quality;
         CONFIG_DISPLAY_FILTERING filtering;
         struct window {
